@@ -2,7 +2,7 @@
 
 ### Pronounced: "Tee - it"
 
-### ONGOING PROJECT - Git Recreation, to both understand it more and educate the masses:
+### <u>ONGOING PROJECT</u> - Git Recreation, to both understand it more and educate the masses:
 
 ## TODO: 
 - **LONG TERM ENDGAME**: FILM YT VIDEO Explaining everything
