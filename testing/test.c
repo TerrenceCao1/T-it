@@ -11,6 +11,6 @@ int main(void)
 	char cwd[PATH_MAX];
 	getcwd(cwd, sizeof(cwd));
 
-	initialize_repo(cwd);
+	init(cwd);
 	return 0;
 }
