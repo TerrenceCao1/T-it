@@ -1,4 +1,6 @@
+#include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -97,15 +99,55 @@ static int buildHeader(OBJECT_TYPE type, char* file, char* ret)
 			break;
 		case TREE:
 			sprintf(typeStr, "tree");
-			// TODO: figure out how to find size of tree (probably static)
+			// TODO: AFTER writing tree code do this
 			break;
 		case COMMIT:
 			sprintf(typeStr, "commit");
+			//TODO: After writing commit code do this
 			//size = strlen(commit->message)
 			break;
 	}
 
 	sprintf(ret, "%s %i", typeStr, size);
+	return size;
+}
+
+static int buildBuffer(OBJECT_TYPE type, char* file)
+{
+	char header[50];
+	int size = buildHeader(type, file, header);
+	if(size == -1) //buildHeader ran into error
+	{
+		return -1;
+	}
+
+	uint8_t buffer[sizeof(header) + size];
+
+	FILE* fp = fopen(file, "r");
+
+	int i = 0;
+	int c;
+
+	while(header[i] != '\0')
+	{
+		buffer[i] = header[i];
+		i++;
+	}
+	buffer[sizeof(header)] = '\0';
+
+	i = 0;
+	while((c = fgetc(fp)) != EOF)
+	{
+		buffer[sizeof(header) + i] = c;
+		i++;
+	}
+
+	for(int i = 0; i < sizeof(buffer); i++)
+	{
+		printf("%c", buffer[i]);
+	}
+
+	printf("\n");
 
 	return 0;
 }
@@ -113,4 +155,5 @@ static int buildHeader(OBJECT_TYPE type, char* file, char* ret)
 void test(OBJECT_TYPE type, char* file, char* ret)
 {
 	buildHeader(type, file, ret);
+	buildBuffer(type, file);
 }

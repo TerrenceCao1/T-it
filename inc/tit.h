@@ -17,7 +17,6 @@ typedef enum
 	BLOB,
 	TREE,
 	COMMIT,
-	TAG,
 } OBJECT_TYPE;
 /*
  * @brief	initializes a tit repo in the specified path
