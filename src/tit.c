@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include "tit.h"
 
+// INIT FUNCTION STATICS + init function
 static int mkdirAtPath(const char *path)
 {
 	//make the path 
@@ -66,4 +67,50 @@ int init(const char* path)
 
 	initialize_repo(path);
 	return 0;
+}
+
+// HASH OBJECT STATICS + function
+/*
+ * build full buffer (type size data)
+ * hash it into raw digest
+ * conv raw digest into hex
+ * derive object path from the hex
+ *
+ * */
+static int buildHeader(OBJECT_TYPE type, char* file, char* ret)
+{
+	char typeStr[7];
+	int size;
+	FILE* fp = fopen(file, "r");
+	if(fp == NULL)
+	{
+		perror(file);
+		return -1;
+	}
+
+	switch(type)
+	{
+		case BLOB:
+			sprintf(typeStr, "blob");
+			fseek(fp, 0, SEEK_END);
+			size = ftell(fp);
+			break;
+		case TREE:
+			sprintf(typeStr, "tree");
+			// TODO: figure out how to find size of tree (probably static)
+			break;
+		case COMMIT:
+			sprintf(typeStr, "commit");
+			//size = strlen(commit->message)
+			break;
+	}
+
+	sprintf(ret, "%s %i", typeStr, size);
+
+	return 0;
+}
+
+void test(OBJECT_TYPE type, char* file, char* ret)
+{
+	buildHeader(type, file, ret);
 }

@@ -12,6 +12,13 @@
 
 #define FILE_PERMS 0755 // Owner can read/write/exec, Others can read/exed
 
+typedef enum
+{
+	BLOB,
+	TREE,
+	COMMIT,
+	TAG,
+} OBJECT_TYPE;
 /*
  * @brief	initializes a tit repo in the specified path
  *			
@@ -25,5 +32,7 @@
 
 int init(const char* path);
 
+
+void test(OBJECT_TYPE type, char* file, char* ret);
 
 #endif
