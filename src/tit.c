@@ -44,14 +44,14 @@ static int initialize_repo(const char* path)
 int init(const char* path)
 {
 
-	//ERROR CHECKS - if path don't exist, or path isn't empty...
+	//ERROR CHECKS 
 	DIR *dir = opendir(path);
 	if(dir == NULL) // path doesn't exist
 	{
 		perror(path);
 		return -1;
 	}
-	
+
 	// path is empty
 	struct dirent* entry;
 	int n = 0;
@@ -131,10 +131,30 @@ static uint8_t* buildBuffer(OBJECT_TYPE type, char* file, size_t* outLen)
 	return outBuffer;
 }
 
-static uint8_t* hashBuff(uint8_t* buffer, size_t size)
+uint8_t* hashBlob(char* file)
 {
+	// ERROR CHECKS 
+	// not a tit repo:
+	DIR* dir = opendir(".tit");
+	if(ENOENT == errno) 
+	{
+		printf("Current directory is not a tit repository\n");
+		return NULL;
+	}
+	closedir(dir);
+
+	// not a valid file
+	if(fopen(file, "rb") == NULL) 
+	{
+		printf("%s is not a valid file\n", file);
+		return NULL;
+	}
+
+	size_t buffSize;
+
+	uint8_t* buffer = buildBuffer(BLOB, file, &buffSize);
 	uint8_t* hash = (uint8_t*)calloc(SHA_DIGEST_LENGTH, sizeof(uint8_t));
-	SHA1(buffer, size, hash);
+	SHA1(buffer, buffSize, hash);
 
 	return hash;
 }
@@ -142,7 +162,6 @@ static uint8_t* hashBuff(uint8_t* buffer, size_t size)
 // HASH IT
 // MAKE THE FILE (with hash as the filename)
 // compress and store in the file.
-
 
 
 void test_hash(OBJECT_TYPE type, char* file)
@@ -155,7 +174,7 @@ void test_hash(OBJECT_TYPE type, char* file)
 		printf("%x", buffer[i]);
 	}
 
-	uint8_t* hash = hashBuff(buffer, buffSize);
+	uint8_t* hash = hashGlob(file);
 
 	printf("\n\nHashed: ");
 	for(int i = 0; i < SHA_DIGEST_LENGTH; i++)

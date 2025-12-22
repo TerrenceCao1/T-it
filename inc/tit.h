@@ -10,6 +10,7 @@
 #ifndef TIT_H
 #define TIT_H
 
+#include <stdio.h>
 #include <stdint.h>
 
 #define FILE_PERMS 0755 // Owner can read/write/exec, Others can read/exed
@@ -34,6 +35,7 @@ typedef enum
 
 int init(const char* path);
 
+uint8_t* hashBlob(char* file);
 
 void test_hash(OBJECT_TYPE type, char* file);
 
