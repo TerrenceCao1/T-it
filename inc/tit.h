@@ -35,6 +35,6 @@ typedef enum
 int init(const char* path);
 
 
-void test(OBJECT_TYPE type, char* file, uint8_t* ret);
+void test_hash(OBJECT_TYPE type, char* file);
 
 #endif

@@ -131,6 +131,13 @@ static uint8_t* buildBuffer(OBJECT_TYPE type, char* file, size_t* outLen)
 	return outBuffer;
 }
 
+static uint8_t* hashBuff(uint8_t* buffer, size_t size)
+{
+	uint8_t* hash = (uint8_t*)calloc(SHA_DIGEST_LENGTH, sizeof(uint8_t));
+	SHA1(buffer, size, hash);
+
+	return hash;
+}
 
 // HASH IT
 // MAKE THE FILE (with hash as the filename)
@@ -138,15 +145,24 @@ static uint8_t* buildBuffer(OBJECT_TYPE type, char* file, size_t* outLen)
 
 
 
-void test(OBJECT_TYPE type, char* file, uint8_t* ret)
+void test_hash(OBJECT_TYPE type, char* file)
 {
-	size_t* buffSize;
-	uint8_t* buffer = buildBuffer(type, file, buffSize);
+	size_t buffSize = 0;
+	uint8_t* buffer = buildBuffer(type, file, &buffSize);
 	printf("0x");
-	for(int i = 0; i < *buffSize; i++)
+	for(int i = 0; i < buffSize; i++)
 	{
 		printf("%x", buffer[i]);
 	}
 
+	uint8_t* hash = hashBuff(buffer, buffSize);
+
+	printf("\n\nHashed: ");
+	for(int i = 0; i < SHA_DIGEST_LENGTH; i++)
+	{
+		printf("%x", hash[i]);
+	}
+
 	free(buffer);
+	free(hash);
 }

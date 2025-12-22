@@ -12,8 +12,7 @@ int main(void)
 	getcwd(cwd, sizeof(cwd));
 	init(cwd);
 
-	uint8_t* whatever;
-	test(BLOB, "GNUmakefile", whatever);
+	test_hash(BLOB, "GNUmakefile");
 
 	return 0;
 }
