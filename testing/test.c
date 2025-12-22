@@ -12,9 +12,8 @@ int main(void)
 	getcwd(cwd, sizeof(cwd));
 	init(cwd);
 
-	char header[50];
-	test(BLOB, "GNUmakefile", header);
-	printf("header: %s\n", header);
+	uint8_t* whatever;
+	test(BLOB, "GNUmakefile", whatever);
 
 	return 0;
 }

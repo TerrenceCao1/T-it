@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <linux/limits.h>
 #include <dirent.h>
+#include <openssl/sha.h>
 #include "tit.h"
 
 // INIT FUNCTION STATICS + init function
@@ -71,7 +72,7 @@ int init(const char* path)
 	return 0;
 }
 
-// HASH OBJECT STATICS + function
+// HASH BLOB STATICS + function
 /*
  * build full buffer (type size data)
  * hash it into raw digest
@@ -79,81 +80,73 @@ int init(const char* path)
  * derive object path from the hex
  *
  * */
+
+/*
+ * This function builds the header in form: "<type> <size>"
+ * */
 static int buildHeader(OBJECT_TYPE type, char* file, char* ret)
 {
-	char typeStr[7];
 	int size;
-	FILE* fp = fopen(file, "r");
-	if(fp == NULL)
-	{
-		perror(file);
-		return -1;
-	}
+	FILE* fp = fopen(file, "rb");
 
-	switch(type)
-	{
-		case BLOB:
-			sprintf(typeStr, "blob");
-			fseek(fp, 0, SEEK_END);
-			size = ftell(fp);
-			break;
-		case TREE:
-			sprintf(typeStr, "tree");
-			// TODO: AFTER writing tree code do this
-			break;
-		case COMMIT:
-			sprintf(typeStr, "commit");
-			//TODO: After writing commit code do this
-			//size = strlen(commit->message)
-			break;
-	}
+	if(fp == NULL) return -1;
 
-	sprintf(ret, "%s %i", typeStr, size);
+	// seeking until the end of the file to find size
+	fseek(fp, 0, SEEK_END);
+	size = ftell(fp);
+
+	fclose(fp);
+	// return this john in the form "blob <size>\0"
+	sprintf(ret, "blob %i", size);
 	return size;
 }
 
-static int buildBuffer(OBJECT_TYPE type, char* file)
+static uint8_t* buildBuffer(OBJECT_TYPE type, char* file, size_t* outLen)
 {
+	// create our header 
 	char header[50];
-	int size = buildHeader(type, file, header);
-	if(size == -1) //buildHeader ran into error
-	{
-		return -1;
-	}
+	int fileSize = buildHeader(type, file, header);
+	int headerSize = strlen(header) + 1; //+1 for the \0
+	if(fileSize == -1) return NULL;
 
-	uint8_t buffer[sizeof(header) + size];
+	// init our dataBuffer
+	uint8_t* dataBuffer = (uint8_t*)malloc(fileSize);
+	if(dataBuffer == NULL) return NULL;
 
-	FILE* fp = fopen(file, "r");
+	// read file contents and store into dataBuffer
+	FILE* fp = fopen(file, "rb");
+	if(fp == NULL) return NULL;
+	
+	fread(dataBuffer, sizeof(dataBuffer[0]), fileSize, fp);
+	fclose(fp);
 
-	int i = 0;
-	int c;
+	// copy into final complete buffer
+	uint8_t* outBuffer = (uint8_t*)malloc(fileSize + headerSize);
 
-	while(header[i] != '\0')
-	{
-		buffer[i] = header[i];
-		i++;
-	}
-	buffer[sizeof(header)] = '\0';
+	memcpy(outBuffer, header, headerSize);
+	memcpy(outBuffer + headerSize, dataBuffer, fileSize);
 
-	i = 0;
-	while((c = fgetc(fp)) != EOF)
-	{
-		buffer[sizeof(header) + i] = c;
-		i++;
-	}
-
-	for(int i = 0; i < sizeof(buffer); i++)
-	{
-		printf("%c", buffer[i]);
-	}
-
-	printf("\n");
-
-	return 0;
+	// output the outputs
+	*outLen = headerSize + fileSize;
+	return outBuffer;
 }
 
-void test(OBJECT_TYPE type, char* file, char* ret)
+
+// HASH IT
+// MAKE THE FILE (with hash as the filename)
+// compress and store in the file.
+
+
+
+void test(OBJECT_TYPE type, char* file, uint8_t* ret)
 {
-	buildHeader(type, file, ret);
-	buildBuffer(type, file);
+	size_t* buffSize;
+	uint8_t* buffer = buildBuffer(type, file, buffSize);
+	printf("0x");
+	for(int i = 0; i < *buffSize; i++)
+	{
+		printf("%x", buffer[i]);
+	}
+
+	free(buffer);
 }

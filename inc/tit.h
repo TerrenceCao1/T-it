@@ -10,6 +10,8 @@
 #ifndef TIT_H
 #define TIT_H
 
+#include <stdint.h>
+
 #define FILE_PERMS 0755 // Owner can read/write/exec, Others can read/exed
 
 typedef enum
@@ -18,6 +20,7 @@ typedef enum
 	TREE,
 	COMMIT,
 } OBJECT_TYPE;
+
 /*
  * @brief	initializes a tit repo in the specified path
  *			
@@ -32,6 +35,6 @@ typedef enum
 int init(const char* path);
 
 
-void test(OBJECT_TYPE type, char* file, char* ret);
+void test(OBJECT_TYPE type, char* file, uint8_t* ret);
 
 #endif
