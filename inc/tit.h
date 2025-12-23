@@ -35,6 +35,15 @@ typedef enum
 
 int init(const char* path);
 
+
+/*
+ * @brief	creates the SHA1 hash of a file (a blob)
+ *
+ * @param	file - file you want to be hashed
+ *
+ * return	pointer to buffer containing the hash
+ * */
+
 uint8_t* hashBlob(char* file);
 
 void test_hash(OBJECT_TYPE type, char* file);

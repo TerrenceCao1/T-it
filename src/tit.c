@@ -8,7 +8,13 @@
 #include <linux/limits.h>
 #include <dirent.h>
 #include <openssl/sha.h>
+#include <assert.h>
+#include <zlib.h>
 #include "tit.h"
+
+// CHUNK size for zlib
+#define CHUNK 16384
+
 
 // INIT FUNCTION STATICS + init function
 static int mkdirAtPath(const char *path)
@@ -68,7 +74,10 @@ int init(const char* path)
 		return -1;
 	}
 
-	initialize_repo(path);
+	if(initialize_repo(path) == 0)
+	{
+		printf("Initialized tit repo!\n");
+	};
 	return 0;
 }
 
@@ -159,6 +168,78 @@ uint8_t* hashBlob(char* file)
 	return hash;
 }
 
+static int compressBlob(char* fileIn, char* fileOut)
+{
+	FILE* inFile = fopen(fileIn, "rb");
+	FILE* outFile = fopen(fileOut, "wb");
+
+	// if either are NULL
+	if(!inFile || !outFile)
+	{
+		perror("fopen");
+		return -1;
+	}
+
+	int ret, flush;
+	unsigned have;
+	z_stream strm;
+	uint8_t inBuffer[CHUNK];
+	uint8_t outBuffer[CHUNK];
+
+	// set z_stream defaults and initiate deflate:
+	memset(&strm, 0, sizeof(strm));
+
+	ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+	if(ret != Z_OK)
+	{
+		return ret;
+	}
+
+	// compress till the end of file
+	do
+	{
+		// read a CHUNK of the input file and store into input buffer
+		strm.avail_in = fread(inBuffer, 1, CHUNK, inFile);
+		if(ferror(inFile)) // if this john messes up
+		{
+			(void)deflateEnd(&strm);
+			return Z_ERRNO;
+		}
+
+		// check if it's the end of the file, if not keep going
+		flush = feof(inFile) ? Z_FINISH : Z_NO_FLUSH;
+		strm.next_in = inBuffer;
+
+		do
+		{
+			strm.avail_out = CHUNK;
+			strm.next_out = outBuffer;
+
+			// deflate that chunk!
+			ret = deflate(&strm, flush);
+			assert(ret != Z_STREAM_ERROR);
+
+			have = CHUNK - strm.avail_out;
+
+			// write the outBuffer to the outFile
+			if(fwrite(outBuffer, 1, have, outFile) != have || ferror(outFile))
+			{
+				(void)deflateEnd(&strm);
+				return Z_ERRNO;
+			}
+		} while (strm.avail_out == 0);
+		assert(strm.avail_in == 0); // check all input is used
+
+	} while (flush != Z_FINISH);
+	assert(ret == Z_STREAM_END);
+
+	(void)deflateEnd(&strm);
+	fclose(inFile);
+	fclose(outFile);
+
+	return Z_OK;
+}
+
 // HASH IT
 // MAKE THE FILE (with hash as the filename)
 // compress and store in the file.
@@ -174,7 +255,7 @@ void test_hash(OBJECT_TYPE type, char* file)
 		printf("%x", buffer[i]);
 	}
 
-	uint8_t* hash = hashGlob(file);
+	uint8_t* hash = hashBlob(file);
 
 	printf("\n\nHashed: ");
 	for(int i = 0; i < SHA_DIGEST_LENGTH; i++)

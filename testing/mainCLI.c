@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		printf("NOT A COMMAND!\n");
+		printf("INVALID COMMAND or INPUTS!\n");
 		return -1;
 	}
 }
