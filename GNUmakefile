@@ -8,7 +8,7 @@ cli:
 	$(CC) $(CFLAGS) ./testing/mainCLI.c $(src_file) $(include_dirs) -o tit
 
 test: 
-	$(CC) ./testing/test.c $(src_file) $(include_dirs) -g $(CFLAGS) -o test 
+	$(CC) ./src/tit_test.c $(src_file) $(include_dirs) -g $(CFLAGS) -o test 
 
 clean:
 	rm -f -r .tit/ *.o test tit
