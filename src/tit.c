@@ -145,19 +145,28 @@ uint8_t* hashBlob(char* file)
 	// ERROR CHECKS 
 	// not a tit repo:
 	DIR* dir = opendir(".tit");
-	if(ENOENT == errno) 
+	if(!dir)
 	{
-		printf("Current directory is not a tit repository\n");
+		if(ENOENT == errno) 
+		{
+			printf("Current directory is not a tit repository\n");
+		}
+		else
+		{
+			perror("opendir");
+		}
 		return NULL;
 	}
 	closedir(dir);
 
 	// not a valid file
-	if(fopen(file, "rb") == NULL) 
+	FILE* fp = fopen(file, "rb");
+	if(fp == NULL) 
 	{
 		printf("%s is not a valid file\n", file);
 		return NULL;
 	}
+	fclose(fp);
 
 	size_t buffSize;
 
@@ -165,10 +174,11 @@ uint8_t* hashBlob(char* file)
 	uint8_t* hash = (uint8_t*)calloc(SHA_DIGEST_LENGTH, sizeof(uint8_t));
 	SHA1(buffer, buffSize, hash);
 
+	free(buffer);
 	return hash;
 }
 
-static int compressBlob(char* fileIn, char* fileOut)
+int compressBlob(char* fileIn, char* fileOut)
 {
 	FILE* inFile = fopen(fileIn, "rb");
 	FILE* outFile = fopen(fileOut, "wb");
@@ -177,6 +187,8 @@ static int compressBlob(char* fileIn, char* fileOut)
 	if(!inFile || !outFile)
 	{
 		perror("fopen");
+		fclose(inFile);
+		fclose(outFile);
 		return -1;
 	}
 
@@ -262,6 +274,8 @@ void test_hash(OBJECT_TYPE type, char* file)
 	{
 		printf("%x", hash[i]);
 	}
+
+	compressBlob("src/tit.c", "src/compressed.z");
 
 	free(buffer);
 	free(hash);

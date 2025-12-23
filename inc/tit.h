@@ -46,6 +46,17 @@ int init(const char* path);
 
 uint8_t* hashBlob(char* file);
 
+/* 
+ * @brief	compress a file into an outfile
+ *
+ * @param	fileIn - input file
+ *
+ * @param	fileOut - output .z file (compressed)
+ *
+ * return	void
+ * */
+int compressBlob(char* fileIn, char* fileOut);
+
 void test_hash(OBJECT_TYPE type, char* file);
 
 #endif
