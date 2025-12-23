@@ -41,7 +41,7 @@ int main(void)
 	closedir(dir);
 
 	// hashing
-	uint8_t* hash = hashBlob(INPUT_FILE);
+	uint8_t* hash = hashBlob(INPUT_FILE, 1);
 	printf("\nMy hash:  ");
 
 	if(hash != NULL)

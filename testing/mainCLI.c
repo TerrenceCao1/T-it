@@ -27,14 +27,14 @@ int main(int argc, char** argv)
 	}
 
 	// HASH_BLOB
-	if(strcmp(argv[1], "hash_blob") == 0)
+	if(strcmp(argv[1], "hash-object") == 0)
 	{
 		if(argc < 3) // they didn't include a file
 		{
 			printf("Please input a file to hash!\n");
 			return -1;
 		}
-		uint8_t* hash = hashBlob(argv[2]);
+		uint8_t* hash = hashBlob(argv[2], 0);
 		if(hash == NULL) return -1;
 
 		for(int i = 0; i < SHA_DIGEST_LENGTH; i++)

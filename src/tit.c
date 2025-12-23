@@ -140,7 +140,44 @@ static uint8_t* buildBuffer(OBJECT_TYPE type, char* file, size_t* outLen)
 	return outBuffer;
 }
 
-uint8_t* hashBlob(char* file)
+// creates a object based on the file given
+static int writeObject(char* file)
+{
+	uint8_t* hash = hashBlob(file, NULL);
+	char dir[3]; // 2 for the hex and one for the null term.
+	sprintf(dir, "%02x", hash[0]);
+	
+	char finalDir[100] = ".tit/objects/";
+	strcat(finalDir, dir);
+	strcat(finalDir, "/");
+
+	if(mkdir(finalDir, FILE_PERMS) == 0)
+	{
+		char fileName[SHA_DIGEST_LENGTH * 2] = "";
+		char temp[3];
+		for(int i = 2; i < SHA_DIGEST_LENGTH; i++)
+		{
+			sprintf(temp, "%02x", hash[i]);
+			strcat(fileName, temp);
+		}
+
+		strcat(finalDir, fileName);
+		FILE* fp = fopen(finalDir, "wb");
+		if(fp == NULL)
+		{
+			perror(fileName);
+			return -1;
+		}
+		printf("directory made: %s\n", finalDir);
+
+		compressBlob(file, finalDir);
+	}
+	free(hash);
+	return 0;
+}
+
+
+uint8_t* hashBlob(char* file, _Bool write)
 {
 	// ERROR CHECKS 
 	// not a tit repo:
@@ -173,6 +210,11 @@ uint8_t* hashBlob(char* file)
 	uint8_t* buffer = buildBuffer(BLOB, file, &buffSize);
 	uint8_t* hash = (uint8_t*)calloc(SHA_DIGEST_LENGTH, sizeof(uint8_t));
 	SHA1(buffer, buffSize, hash);
+
+	if(write)
+	{
+		writeObject(file);
+	}
 
 	free(buffer);
 	return hash;
@@ -257,6 +299,7 @@ int compressBlob(char* fileIn, char* fileOut)
 // compress and store in the file.
 
 
+
 void test_hash(OBJECT_TYPE type, char* file)
 {
 	size_t buffSize = 0;
@@ -267,7 +310,7 @@ void test_hash(OBJECT_TYPE type, char* file)
 		printf("%x", buffer[i]);
 	}
 
-	uint8_t* hash = hashBlob(file);
+	uint8_t* hash = hashBlob(file, 0);
 
 	printf("\n\nHashed: ");
 	for(int i = 0; i < SHA_DIGEST_LENGTH; i++)

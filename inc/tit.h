@@ -22,6 +22,7 @@ typedef enum
 	COMMIT,
 } OBJECT_TYPE;
 
+
 /*
  * @brief	initializes a tit repo in the specified path
  *			
@@ -35,7 +36,6 @@ typedef enum
 
 int init(const char* path);
 
-
 /*
  * @brief	creates the SHA1 hash of a file (a blob)
  *
@@ -44,7 +44,7 @@ int init(const char* path);
  * return	pointer to buffer containing the hash
  * */
 
-uint8_t* hashBlob(char* file);
+uint8_t* hashBlob(char* file, _Bool write);
 
 /* 
  * @brief	compress a file into an outfile
