@@ -1,0 +1,17 @@
+Compress this! 
+
+4x4/5x5 Blindfolded
+J Perm’s beginner 4BLD tutorial
+Timothy Goh’s beginner 5BLD tutorial
+Timothy Goh’s Roman Rooms tutorial
+Stanley's U2 tricks
+Daniel Sheppard’s tutorials on intuitive center comms
+Stanley’s wing parity guide
+Tom’s 5BLD memo example (also good for seeing how Roman Rooms work generally)
+Ryan Eckersley’s bigBLD comms
+Michael Tripodi's BLD comms
+Daniel Wallin’s BLD comms
+Stanley’s bigBLD algs (currently only contains centers and wing parity, but will be updated with more sets over time)
+Charlie Harrison's midge flips
+
+Multiple Blindfolded
