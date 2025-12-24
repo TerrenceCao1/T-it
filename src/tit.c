@@ -294,12 +294,41 @@ int compressBlob(char* fileIn, char* fileOut)
 	return Z_OK;
 }
 
-// HASH IT
-// MAKE THE FILE (with hash as the filename)
-// compress and store in the file.
+int catFile(char* hash)
+{
+	// find the file corresponding to the hash in the objects folder
+	// decompress contents
+	// output it to stdout
+	
+	// ERROR CHECKS:
+	// hash length must be 40.
+	if(strlen(hash) != SHA_DIGEST_LENGTH * 2)
+	{
+		printf("Invalid Hash. Hash must be 40 chars long\n");
+		return -1;
+	}
+	char file[80]; // ".tit/objects/xx/<38 hex digits>"
+	sprintf(file, ".tit/objects/");
+
+	// add the folder to the file location template
+	char folder[4];
+	sprintf(folder, "%c%c/", hash[0], hash[1]);
+	strcat(file, folder);
+
+	memcpy(file + strlen(file), hash + 2, 2 * SHA_DIGEST_LENGTH - 2);
+
+	FILE* fp = fopen(file, "rb");
+	if(fp == NULL)
+	{
+		perror(file);
+		return -1;
+	}
 
 
+}
 
+
+/*
 void test_hash(OBJECT_TYPE type, char* file)
 {
 	size_t buffSize = 0;
@@ -323,3 +352,4 @@ void test_hash(OBJECT_TYPE type, char* file)
 	free(buffer);
 	free(hash);
 }
+*/
