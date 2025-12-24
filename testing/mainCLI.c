@@ -34,13 +34,42 @@ int main(int argc, char** argv)
 			printf("Please input a file to hash!\n");
 			return -1;
 		}
-		uint8_t* hash = hashBlob(argv[2], 0);
-		if(hash == NULL) return -1;
+		
+		uint8_t* hash = NULL;
+		// flag and file handeling:
+		_Bool write = FALSE;
+		_Bool fileFoundFlag = FALSE;
+		int fileIndex;
 
-		for(int i = 0; i < SHA_DIGEST_LENGTH; i++)
+		for(int i = 2; i < argc; i++)
 		{
-			printf("%02x", hash[i]);
+			if(strcmp(argv[i], "-w") == 0)
+			{
+				write = TRUE;
+			}
+			if(fopen(argv[i], "rb") != NULL)
+			{
+				fileFoundFlag = TRUE;
+				fileIndex = i;
+			}
+			if((i == argc - 1) && (fileFoundFlag == FALSE)) 
+			{
+				printf("Please input a file to hash!\n");
+				return -1;
+			}
 		}
+		if(fileFoundFlag)
+		{
+			hash = hashBlob(argv[fileIndex], write);
+			if(hash == NULL) return -1;
+
+			// print out the hash!
+			for(int i = 0; i < SHA_DIGEST_LENGTH; i++)
+			{
+				printf("%02x", hash[i]);
+			}
+		}
+
 		return 0;
 	}
 	else
