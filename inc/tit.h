@@ -15,6 +15,9 @@
 
 #define FILE_PERMS 0755 // Owner can read/write/exec, Others can read/exed
 
+#define TRUE 1
+#define FALSE 0
+
 typedef enum
 {
 	BLOB,
