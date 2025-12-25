@@ -294,6 +294,71 @@ int compressBlob(char* fileIn, char* fileOut)
 	return Z_OK;
 }
 
+int decompressBlob(char* fileIn)
+{
+	FILE* inFile = fopen(fileIn, "rb");
+
+	int ret;
+	unsigned have;
+	z_stream strm;
+	unsigned char bufferIn[CHUNK];
+	unsigned char bufferOut[CHUNK];
+
+	// setting inflate parameters
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
+	strm.avail_in = 0;
+	strm.next_in = Z_NULL;
+
+	ret = inflateInit(&strm);
+	if(ret != Z_OK)
+	{
+		return ret;
+	}
+
+	do
+	{
+		strm.avail_in = fread(bufferIn, 1, CHUNK, inFile);
+		if(ferror(inFile))
+		{
+			(void)inflateEnd(&strm);
+			return Z_ERRNO;
+		}
+		if(strm.avail_in == 0)
+		{
+			break;
+		}
+		strm.next_in = bufferIn;
+
+		do
+		{
+			strm.avail_out = CHUNK;
+			strm.next_out = bufferOut;
+
+			ret = inflate(&strm, Z_NO_FLUSH);
+			assert(ret != Z_STREAM_ERROR);
+			
+			switch(ret)
+			{
+				case Z_NEED_DICT: // FALL THROUGH!
+					ret = Z_DATA_ERROR;
+				case Z_DATA_ERROR:
+				case Z_MEM_ERROR:
+					(void)inflateEnd(&strm);
+					return ret;
+			}
+
+			have = CHUNK - strm.avail_out;
+			if(fwrite(bufferOut, 1, have, /*TODO: modify so that it just prints out and deletes this output file.*/))
+
+		}
+	}
+
+
+
+}
+
 int catFile(char* hash)
 {
 	// find the file corresponding to the hash in the objects folder
