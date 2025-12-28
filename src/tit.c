@@ -33,6 +33,7 @@ static int initialize_repo(const char* path)
 	if(mkdirAtPath(".tit/objects") != 0) return -1;
 	if(mkdirAtPath(".tit/refs") != 0) return -1;
 	if(mkdirAtPath(".tit/refs/heads") != 0) return -1;
+	if(mkdirAtPath(".tit/temp") != 0) return -1;
 
 	FILE *f = fopen(".tit/HEAD", "w");
 	if(f == NULL)
@@ -297,6 +298,7 @@ int compressBlob(char* fileIn, char* fileOut)
 int decompressBlob(char* fileIn)
 {
 	FILE* inFile = fopen(fileIn, "rb");
+	FILE* outFile = fopen(".tit/temp/out", "wb");
 
 	int ret;
 	unsigned have;
@@ -350,13 +352,16 @@ int decompressBlob(char* fileIn)
 			}
 
 			have = CHUNK - strm.avail_out;
-			if(fwrite(bufferOut, 1, have, /*TODO: modify so that it just prints out and deletes this output file.*/))
+			if(fwrite(bufferOut, 1, have, outFile))
+			{
+				(void)inflateEnd(&strm);
+				return Z_ERRNO;
+			}
+		} while (strm.avail_out == 0);
+	} while (ret != Z_STREAM_END);
 
-		}
-	}
-
-
-
+	(void)inflateEnd(&strm);
+	return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
 }
 
 int catFile(char* hash)
@@ -372,24 +377,35 @@ int catFile(char* hash)
 		printf("Invalid Hash. Hash must be 40 chars long\n");
 		return -1;
 	}
-	char file[80]; // ".tit/objects/xx/<38 hex digits>"
-	sprintf(file, ".tit/objects/");
+	char hashedFileName[80]; // ".tit/objects/xx/<38 hex digits>"
+	sprintf(hashedFileName, ".tit/objects/");
 
-	// add the folder to the file location template
+	// add the folder to the hashedFileName location template
 	char folder[4];
 	sprintf(folder, "%c%c/", hash[0], hash[1]);
-	strcat(file, folder);
+	strcat(hashedFileName, folder);
 
-	memcpy(file + strlen(file), hash + 2, 2 * SHA_DIGEST_LENGTH - 2);
+	memcpy(hashedFileName + strlen(hashedFileName), hash + 2, 2 * SHA_DIGEST_LENGTH - 2);
 
-	FILE* fp = fopen(file, "rb");
+	// decompress the contents of the file (gets saved to binary file ".tit/temp/out")
+	if(decompressBlob(hashedFileName) != Z_OK) return -1;
+
+	// then we print out all the contents of the decompressed file
+	FILE* fp = fopen(".tit/temp/out", "rb");
 	if(fp == NULL)
 	{
-		perror(file);
+		perror(".tit/temp/out");
 		return -1;
 	}
 
+	char ch;
+	while((ch = fgetc(fp)) != EOF)
+	{
+		printf("%c", ch);
+	}
 
+	fclose(fp);
+	return 0;
 }
 
 

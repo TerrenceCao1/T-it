@@ -60,6 +60,17 @@ uint8_t* hashBlob(char* file, _Bool write);
  * */
 int compressBlob(char* fileIn, char* fileOut);
 
+/*
+ * @brief	prints out contents of a tit object to to stdout
+ *
+ * @param	hash - the hash of the tit object 
+ *
+ * return	0 if successful, -1 if error
+ *
+ *
+ * */
+int catFile(char* hash);
+
 void test_hash(OBJECT_TYPE type, char* file);
 
 #endif

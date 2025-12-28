@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <errno.h>
 #include <linux/limits.h>
@@ -13,7 +14,14 @@ int main(int argc, char** argv)
 {
 	if(argc == 1) // someone only calls "tit" with no cmd
 	{
-		printf("tit is a version control platform potentially inspired by fairly unpopular, unknown software git.\n");
+		printf("tit is a version control platform potentially inspired by fairly unpopular, unknown software git.\n\nUsage: try 'tit init'");
+		return 0;
+	}
+
+	// someone tries to do tit commands without initing
+	if((opendir(".tit") == NULL) && (strcmp(argv[1], "init") != 0))
+	{
+		printf("You need to do 'tit init' in order to use any tit functions\n");
 		return 0;
 	}
 
@@ -72,6 +80,13 @@ int main(int argc, char** argv)
 
 		return 0;
 	}
+
+	// CAT-FILE
+	if(strcmp(argv[1], "cat-file") == 0)
+	{
+		catFile(argv[2]);
+	}
+
 	else
 	{
 		printf("INVALID COMMAND or INPUTS!\n");
