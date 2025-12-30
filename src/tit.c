@@ -94,30 +94,38 @@ int init(const char* path)
 /*
  * This function builds the header in form: "<type> <size>"
  * */
-static int buildHeader(OBJECT_TYPE type, char* file, char* ret)
+static char* buildHeader(OBJECT_TYPE type, char* file, size_t* outLen, long* fileSize)
 {
-	int size;
 	FILE* fp = fopen(file, "rb");
 
-	if(fp == NULL) return -1;
+	if(fp == NULL) return NULL;
 
 	// seeking until the end of the file to find size
 	fseek(fp, 0, SEEK_END);
-	size = ftell(fp);
+	long size = ftell(fp);
 
 	fclose(fp);
+
+	int len = snprintf(NULL, 0, "blob %ld", size);
+
+	char* header = malloc(len + 1);
+	if(!header) return NULL;
+
 	// return this john in the form "blob <size>\0"
-	sprintf(ret, "blob %i", size);
-	return size;
+	snprintf(header, len + 1, "blob %ld", size);
+	*outLen = len + 1;
+	*fileSize = size;
+	return header;
 }
 
 static uint8_t* buildBuffer(OBJECT_TYPE type, char* file, size_t* outLen)
 {
 	// create our header 
-	char header[50];
-	int fileSize = buildHeader(type, file, header);
-	int headerSize = strlen(header) + 1; //+1 for the \0
-	if(fileSize == -1) return NULL;
+	size_t headerLen;
+	long fileSize;
+
+	char* header = buildHeader(type, file, &headerLen, &fileSize);
+	if(!header) return NULL;
 
 	// init our dataBuffer
 	uint8_t* dataBuffer = (uint8_t*)malloc(fileSize);
@@ -131,37 +139,40 @@ static uint8_t* buildBuffer(OBJECT_TYPE type, char* file, size_t* outLen)
 	fclose(fp);
 
 	// copy into final complete buffer
-	uint8_t* outBuffer = (uint8_t*)malloc(fileSize + headerSize);
+	uint8_t* outBuffer = (uint8_t*)malloc(fileSize + headerLen);
 
-	memcpy(outBuffer, header, headerSize);
-	memcpy(outBuffer + headerSize, dataBuffer, fileSize);
+	memcpy(outBuffer, header, headerLen);
+	memcpy(outBuffer + headerLen, dataBuffer, fileSize);
 
 	// output the outputs
-	*outLen = headerSize + fileSize;
+	*outLen = headerLen + fileSize;
 	return outBuffer;
 }
 
 // creates a object based on the file given
 static int writeObject(char* file)
 {
+	// construct file path for the object using the hash
 	uint8_t* hash = hashBlob(file, NULL);
 	char dir[3]; // 2 for the hex and one for the null term.
 	sprintf(dir, "%02x", hash[0]);
-	
+
 	char finalDir[100] = ".tit/objects/";
 	strcat(finalDir, dir);
 	strcat(finalDir, "/");
 
 	if(mkdir(finalDir, FILE_PERMS) == 0)
 	{
+		// make file name
 		char fileName[SHA_DIGEST_LENGTH * 2] = "";
 		char temp[3];
-		for(int i = 2; i < SHA_DIGEST_LENGTH; i++)
+		for(int i = 1; i < SHA_DIGEST_LENGTH; i++)
 		{
 			sprintf(temp, "%02x", hash[i]);
 			strcat(fileName, temp);
 		}
 
+		// create and edit the finalDir
 		strcat(finalDir, fileName);
 		FILE* fp = fopen(finalDir, "wb");
 		if(fp == NULL)
@@ -170,6 +181,22 @@ static int writeObject(char* file)
 			return -1;
 		}
 		printf("directory made: %s\n", finalDir);
+
+		/*
+		// make a temporary file (at .tit/temp) in order to get the header in front of the contents
+		FILE* addingHeader = fopen(".tit/temp/compressionHelper", "wb");
+		size_t* headerLen;
+		long* fileSize;
+		char* header = buildHeader(BLOB, file, headerLen, fileSize);
+
+		if(!header) return -1;
+		fwrite(header, sizeof(header), 1, addingHeader);
+
+		free(header);
+		fclose(addingHeader);
+
+		FILE* addingContent = fopen(".tit/temp/compressionHelper", "a");
+		*/
 
 		compressBlob(file, finalDir);
 	}
@@ -226,7 +253,7 @@ int compressBlob(char* fileIn, char* fileOut)
 	FILE* inFile = fopen(fileIn, "rb");
 	FILE* outFile = fopen(fileOut, "wb");
 
-	// if either are NULL
+	// if any are NULL
 	if(!inFile || !outFile)
 	{
 		perror("fopen");
@@ -352,7 +379,7 @@ int decompressBlob(char* fileIn)
 			}
 
 			have = CHUNK - strm.avail_out;
-			if(fwrite(bufferOut, 1, have, outFile))
+			if(fwrite(bufferOut, 1, have, outFile) != have || ferror(outFile))
 			{
 				(void)inflateEnd(&strm);
 				return Z_ERRNO;
@@ -386,6 +413,7 @@ int catFile(char* hash)
 	strcat(hashedFileName, folder);
 
 	memcpy(hashedFileName + strlen(hashedFileName), hash + 2, 2 * SHA_DIGEST_LENGTH - 2);
+	hashedFileName[strlen(hashedFileName)] = '\0';
 
 	// decompress the contents of the file (gets saved to binary file ".tit/temp/out")
 	if(decompressBlob(hashedFileName) != Z_OK) return -1;
@@ -398,10 +426,12 @@ int catFile(char* hash)
 		return -1;
 	}
 
-	char ch;
+	printf("Reading:\n");
+
+	int ch;
 	while((ch = fgetc(fp)) != EOF)
 	{
-		printf("%c", ch);
+		putchar(ch);
 	}
 
 	fclose(fp);
