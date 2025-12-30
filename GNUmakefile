@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -lz -lssl -lcrypto
+CFLAGS = -Wall -lz -lssl -lcrypto -g
 
 include_dirs = -I./inc
 src_file = ./src/tit.c
