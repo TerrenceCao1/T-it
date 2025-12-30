@@ -52,13 +52,15 @@ uint8_t* hashBlob(char* file, _Bool write);
 /* 
  * @brief	compress a file into an outfile
  *
- * @param	fileIn - input file
+ * @param	dataBuffer - buffer containing the data that we're gonna compress
+ *
+ * @param	dataLen - length of data that's gonna be compressed.
  *
  * @param	fileOut - output .z file (compressed)
  *
  * return	void
  * */
-int compressBlob(char* fileIn, char* fileOut);
+int compressBlobBuffer(uint8_t* dataBuffer, size_t dataLen, char* fileOut);
 
 /*
  * @brief	prints out contents of a tit object to to stdout

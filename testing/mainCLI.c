@@ -85,6 +85,7 @@ int main(int argc, char** argv)
 	if(strcmp(argv[1], "cat-file") == 0)
 	{
 		catFile(argv[2]);
+		return 0;
 	}
 
 	else

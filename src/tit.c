@@ -118,6 +118,9 @@ static char* buildHeader(OBJECT_TYPE type, char* file, size_t* outLen, long* fil
 	return header;
 }
 
+/*
+ * buildBuffer builds a malloced uint8_t buffer with the header, and file contents of a file
+ */
 static uint8_t* buildBuffer(OBJECT_TYPE type, char* file, size_t* outLen)
 {
 	// create our header 
@@ -182,23 +185,9 @@ static int writeObject(char* file)
 		}
 		printf("directory made: %s\n", finalDir);
 
-		/*
-		// make a temporary file (at .tit/temp) in order to get the header in front of the contents
-		FILE* addingHeader = fopen(".tit/temp/compressionHelper", "wb");
-		size_t* headerLen;
-		long* fileSize;
-		char* header = buildHeader(BLOB, file, headerLen, fileSize);
-
-		if(!header) return -1;
-		fwrite(header, sizeof(header), 1, addingHeader);
-
-		free(header);
-		fclose(addingHeader);
-
-		FILE* addingContent = fopen(".tit/temp/compressionHelper", "a");
-		*/
-
-		compressBlob(file, finalDir);
+		size_t bufferLen = -1;
+		uint8_t* dataBuffer = buildBuffer(BLOB, file, &bufferLen);
+		compressBlobBuffer(dataBuffer, bufferLen, finalDir);
 	}
 	free(hash);
 	return 0;
@@ -248,9 +237,14 @@ uint8_t* hashBlob(char* file, _Bool write)
 	return hash;
 }
 
-int compressBlob(char* fileIn, char* fileOut)
+int compressBlobBuffer(uint8_t* dataBuffer, size_t dataLen, char* fileOut)
 {
-	FILE* inFile = fopen(fileIn, "rb");
+	// write the dataBuffer (which will be created by caller using buildBuffer) to a file that we can then compress.
+	FILE* dataHelper = fopen(".tit/temp/compressHelper", "wb");
+	fwrite(dataBuffer, sizeof(uint8_t), dataLen, dataHelper);
+	fclose(dataHelper);
+
+	FILE* inFile = fopen(".tit/temp/compressHelper", "rb");
 	FILE* outFile = fopen(fileOut, "wb");
 
 	// if any are NULL
@@ -388,6 +382,7 @@ int decompressBlob(char* fileIn)
 	} while (ret != Z_STREAM_END);
 
 	(void)inflateEnd(&strm);
+	fclose(outFile);
 	return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
 }
 
@@ -426,14 +421,35 @@ int catFile(char* hash)
 		return -1;
 	}
 
-	printf("Reading:\n");
+	unsigned char buffer[1024];
+	size_t n;
+	int seen_nul = 0;
 
-	int ch;
-	while((ch = fgetc(fp)) != EOF)
+	while((n = fread(buffer, 1, sizeof(buffer), fp)) > 0)
 	{
-		putchar(ch);
+		if(!seen_nul)
+		{
+			for(size_t i = 0; i < n; i++)
+			{
+				if(buffer[i] == '\0')
+				{
+					seen_nul = 1;
+					if(i + 1 < n)
+					{
+						fwrite(buffer + i + 1, 1, n - (i + 1), stdout);
+					}
+					break;
+				}
+				
+			}
+		}
+		if(seen_nul)
+		{
+			fwrite(buffer, 1, n, stdout);
+		}
 	}
 
+	fflush(stdout);
 	fclose(fp);
 	return 0;
 }
