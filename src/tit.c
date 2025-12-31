@@ -382,6 +382,7 @@ int decompressBlob(char* fileIn)
 	} while (ret != Z_STREAM_END);
 
 	(void)inflateEnd(&strm);
+	fclose(inFile);
 	fclose(outFile);
 	return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
 }
@@ -425,25 +426,27 @@ int catFile(char* hash)
 	size_t n;
 	int seen_nul = 0;
 
+	fflush(stdout);
 	while((n = fread(buffer, 1, sizeof(buffer), fp)) > 0)
 	{
 		if(!seen_nul)
 		{
-			for(size_t i = 0; i < n; i++)
+			size_t i;
+			for( i = 0; i < n; i++)
 			{
 				if(buffer[i] == '\0')
 				{
 					seen_nul = 1;
-					if(i + 1 < n)
-					{
-						fwrite(buffer + i + 1, 1, n - (i + 1), stdout);
-					}
+					i++;
 					break;
 				}
-				
+			}
+			if(seen_nul && i < n)
+			{
+				fwrite(buffer + i, 1, n - i, stdout);
 			}
 		}
-		if(seen_nul)
+		else
 		{
 			fwrite(buffer, 1, n, stdout);
 		}
