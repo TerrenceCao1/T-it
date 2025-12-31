@@ -67,11 +67,17 @@ int compressBlobBuffer(uint8_t* dataBuffer, size_t dataLen, char* fileOut);
  *
  * @param	hash - the hash of the tit object 
  *
+ * @param	type - flag for if we need to print type
+ *
+ * @param	size - flag for if we need to print size
+ * 
+ * @param	blob - flag for if we need to print blob contents
+ *
  * return	0 if successful, -1 if error
  *
  *
  * */
-int catFile(char* hash);
+int catFile(char* hash, _Bool type, _Bool size, _Bool blob);
 
 void test_hash(OBJECT_TYPE type, char* file);
 

@@ -83,13 +83,6 @@ int init(const char* path)
 }
 
 // HASH BLOB STATICS + function
-/*
- * build full buffer (type size data)
- * hash it into raw digest
- * conv raw digest into hex
- * derive object path from the hex
- *
- * */
 
 /*
  * This function builds the header in form: "<type> <size>"
@@ -316,9 +309,17 @@ int compressBlobBuffer(uint8_t* dataBuffer, size_t dataLen, char* fileOut)
 	return Z_OK;
 }
 
+// TIT CAT-FILE and HELPER FUNCTIONS:
+
+
 int decompressBlob(char* fileIn)
 {
 	FILE* inFile = fopen(fileIn, "rb");
+	if(inFile == NULL)
+	{
+		printf("Invalid File!\n");
+		return -1;
+	}
 	FILE* outFile = fopen(".tit/temp/out", "wb");
 
 	int ret;
@@ -387,12 +388,8 @@ int decompressBlob(char* fileIn)
 	return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
 }
 
-int catFile(char* hash)
+int catFile(char* hash, _Bool type, _Bool size, _Bool blob)
 {
-	// find the file corresponding to the hash in the objects folder
-	// decompress contents
-	// output it to stdout
-	
 	// ERROR CHECKS:
 	// hash length must be 40.
 	if(strlen(hash) != SHA_DIGEST_LENGTH * 2)
@@ -422,40 +419,89 @@ int catFile(char* hash)
 		return -1;
 	}
 
-	unsigned char buffer[1024];
-	size_t n;
-	int seen_nul = 0;
-
-	fflush(stdout);
-	while((n = fread(buffer, 1, sizeof(buffer), fp)) > 0)
+	// FOR TYPE:
+	if(type)
 	{
-		if(!seen_nul)
+		int c;
+		// print characters until a space
+		while((c = getc(fp)) != ' ')
 		{
-			size_t i;
-			for( i = 0; i < n; i++)
-			{
-				if(buffer[i] == '\0')
-				{
-					seen_nul = 1;
-					i++;
-					break;
-				}
-			}
-			if(seen_nul && i < n)
-			{
-				fwrite(buffer + i, 1, n - i, stdout);
-			}
+			putchar(c);
 		}
-		else
-		{
-			fwrite(buffer, 1, n, stdout);
-		}
+		printf("\n");
 	}
 
-	fflush(stdout);
-	fclose(fp);
+	// FOR SIZE:
+	if(size)
+	{
+		fp = fopen(".tit/temp/out", "rb");
+		if(fp == NULL)
+		{
+			perror(".tit/temp/out");
+			return -1;
+		}
+
+		// start printing after the space and before \0
+		int c;
+		while((c = getc(fp)) != ' ')
+		{
+			continue; // run the fp STREAM until the char is a space
+		}
+		while((c = getc(fp)) != '\0')
+		{
+			putchar(c);
+		}
+		printf("\n");
+	}
+
+	// FOR BLOB:
+	if(blob)
+	{
+		fp = fopen(".tit/temp/out", "rb");
+		if(fp == NULL)
+		{
+			perror(".tit/temp/out");
+			return -1;
+		}
+
+		unsigned char buffer[1024];
+		size_t n;
+		int seen_nul = 0;
+
+		fflush(stdout);
+		while((n = fread(buffer, 1, sizeof(buffer), fp)) > 0)
+		{
+			if(!seen_nul)
+			{
+				size_t i;
+				for(i = 0; i < n; i++)
+				{
+					if(buffer[i] == '\0')
+					{
+						seen_nul = 1;
+						i++;
+						break;
+					}
+				}
+				if(seen_nul && i < n)
+				{
+					fwrite(buffer + i, 1, n - i, stdout);
+				}
+			}
+			else
+			{
+				fwrite(buffer, 1, n, stdout);
+			}
+		}
+
+		fflush(stdout);
+		fclose(fp);
+	}
 	return 0;
 }
+
+// TIT ADD and Helper Functions:
+
 
 
 /*

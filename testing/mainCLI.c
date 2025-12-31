@@ -77,14 +77,54 @@ int main(int argc, char** argv)
 				printf("%02x", hash[i]);
 			}
 		}
+		else
+		{
+			printf("We can't hash-object without a valid file bub.\n");
+		}
 
 		return 0;
 	}
 
-	// CAT-FILE
+	// CAT-FILE for blobs
 	if(strcmp(argv[1], "cat-file") == 0)
 	{
-		catFile(argv[2]);
+		// for blobs: 
+		// -t means type
+		// -s means size
+		// blob means print contents
+		_Bool typeFlag = FALSE;
+		_Bool sizeFlag = FALSE;
+		_Bool hashFoundFlag = FALSE;
+		_Bool blobFlag = FALSE;
+		int hashIndex = -1;
+
+		for(int i = 2; i < argc; i++)
+		{
+			if(strcmp(argv[i], "-t") == 0)
+			{
+				typeFlag = TRUE;
+			}
+			else if(strcmp(argv[i], "-s") == 0)
+			{
+				sizeFlag = TRUE;
+			}
+			else if(strcmp(argv[i], "blob") == 0)
+			{
+				blobFlag = TRUE;
+			}
+			else // anything will input as hash - handle errors in the catFile Function.
+			{
+				hashFoundFlag = TRUE;
+				hashIndex = i;
+			}
+		}
+		
+		if(!hashFoundFlag)
+		{
+			printf("Input a hash for a file please.\n");
+			return -1;
+		}
+		catFile(argv[hashIndex], typeFlag, sizeFlag, blobFlag);
 		return 0;
 	}
 
