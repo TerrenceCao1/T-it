@@ -9,6 +9,7 @@
 #include <dirent.h>
 #include <openssl/sha.h>
 #include <assert.h>
+#include <arpa/inet.h>
 #include <zlib.h>
 #include "tit.h"
 
@@ -176,7 +177,7 @@ static int writeObject(char* file)
 			perror(fileName);
 			return -1;
 		}
-		printf("directory made: %s\n", finalDir);
+		// printf("directory made: %s\n", finalDir);
 
 		size_t bufferLen = -1;
 		uint8_t* dataBuffer = buildBuffer(BLOB, file, &bufferLen);
@@ -501,31 +502,63 @@ int catFile(char* hash, _Bool type, _Bool size, _Bool blob)
 }
 
 // TIT ADD and Helper Functions:
+/* tit add will:
+ * write an object file for the file added
+ * create an indexEntry - with mode, sha1 hash, path, file_size
+ * write the indexEntry to the .tit/index file
+ */
 
-
-
-/*
-void test_hash(OBJECT_TYPE type, char* file)
+// this function initiates an index header (caller must free!), and makes the index file
+// There is only ONE index header (that is global and updates whenever an entry is added/rmed)
+struct indexHeader* initIndex(void)
 {
-	size_t buffSize = 0;
-	uint8_t* buffer = buildBuffer(type, file, &buffSize);
-	printf("0x");
-	for(int i = 0; i < buffSize; i++)
+	// making header defaults
+	struct indexHeader* header = malloc(sizeof(indexHeader));
+	memcpy(header->signature, "DIRC", 4);
+	header->version = htonl(2);
+	header->entry_count = htonl(0);
+
+	// creating the index file
+	FILE* fp = fopen(".tit/index", "ab");
+	if(fp == NULL)
 	{
-		printf("%x", buffer[i]);
+		perror(".tit/index");
+		return NULL;
 	}
 
-	uint8_t* hash = hashBlob(file, 0);
+	// write the header to the index file:
+	fwrite(header->signature, 1, 4, fp);
+	fwrite(&header->version, 4, 1, fp);
+	fwrite(&header->entry_count, 4, 1, fp);
 
-	printf("\n\nHashed: ");
-	for(int i = 0; i < SHA_DIGEST_LENGTH; i++)
-	{
-		printf("%x", hash[i]);
-	}
+	// calculate checksum
+	unsigned char checksumData[sizeof(indexHeader)];
+	unsigned char checksum[20];
+	memcpy(checksumData, header, sizeof(indexHeader));
 
-	compressBlob("src/tit.c", "src/compressed.z");
+	SHA1(checksumData, sizeof(indexHeader), checksum);
 
-	free(buffer);
-	free(hash);
+	// write checksum to index file:
+	fwrite(checksum, SHA_DIGEST_LENGTH, 1, fp);
+
+	fclose(fp);
+
+	return header;
 }
-*/
+
+// create an indexEntry from a path to an object
+struct indexEntry* createIndexEntry(char* hashObjectPath)
+{
+	// initialize an indexEntry, with the stuff from the file we have
+	struct indexEntry* entry = malloc(sizeof(struct indexEntry));
+	if(entry == NULL) return NULL;
+
+	entry->mode = FILE_PERMS;
+
+	// filling in entry->sha1
+	unsigned char* sha1Hash[20];
+
+}
+
+// readIndex reads the file at .tit/index and outputs an array of entries in the file, and the count of them.
+static int readIndex(struct indexEntry** entries, size_t* count);

@@ -25,6 +25,28 @@ typedef enum
 	COMMIT,
 } OBJECT_TYPE;
 
+typedef struct indexHeader
+{
+	char signature[4]; // DIRC
+	uint32_t version;
+	uint32_t entry_count;
+} indexHeader;
+
+struct indexEntry
+{
+	// mode
+	// sha1 hash of blob
+	// flags - path length
+	// file_size
+	// path
+	
+	uint32_t mode; // this will just be FILE_PERMS
+	unsigned char sha1[20];
+	uint16_t flags; // just path length
+	uint32_t file_size;
+	char* path;
+};
+
 
 /*
  * @brief	initializes a tit repo in the specified path
@@ -79,6 +101,6 @@ int compressBlobBuffer(uint8_t* dataBuffer, size_t dataLen, char* fileOut);
  * */
 int catFile(char* hash, _Bool type, _Bool size, _Bool blob);
 
-void test_hash(OBJECT_TYPE type, char* file);
+struct indexHeader* initIndex(void);
 
 #endif

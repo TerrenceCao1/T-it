@@ -12,7 +12,6 @@ int main(void)
 	getcwd(cwd, sizeof(cwd));
 	init(cwd);
 
-	test_hash(BLOB, "GNUmakefile");
-
+	initIndex();
 	return 0;
 }
