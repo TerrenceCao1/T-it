@@ -10,5 +10,7 @@ cli:
 test: 
 	$(CC) ./src/tit_test.c $(src_file) $(include_dirs) -g $(CFLAGS) -o test 
 
+test_index:
+	$(CC) ./testing/test.c $(src_file) $(include_dirs) -g $(CFLAGS) -o test 
 clean:
 	rm -f -r .tit/ *.o test tit
