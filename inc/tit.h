@@ -32,7 +32,7 @@ typedef struct indexHeader
 	uint32_t entry_count;
 } indexHeader;
 
-struct indexEntry
+typedef struct indexEntry
 {
 	// mode
 	// sha1 hash of blob
@@ -45,7 +45,7 @@ struct indexEntry
 	uint16_t pathLen;
 	uint32_t file_size;
 	char* path;
-};
+} indexEntry;
 
 
 /*

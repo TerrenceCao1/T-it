@@ -524,7 +524,7 @@ int catFile(char* hash, _Bool type, _Bool size, _Bool blob)
 
 // this function initiates an index header (caller must free!), and makes the index file
 // There is only ONE index header (that is global and updates whenever an entry is added/rmed)
-struct indexHeader* initIndex(void)
+static indexHeader* writeIndexHeader(void)
 {
 	// making header defaults
 	struct indexHeader* header = malloc(sizeof(indexHeader));
@@ -545,30 +545,49 @@ struct indexHeader* initIndex(void)
 	fwrite(&header->version, 4, 1, fp);
 	fwrite(&header->entry_count, 4, 1, fp);
 
-	// calculate checksum
-	unsigned char checksumData[sizeof(indexHeader)];
-	unsigned char checksum[20];
-	memcpy(checksumData, header, sizeof(indexHeader));
+	fclose(fp);
+	return header;
+}
 
-	SHA1(checksumData, sizeof(indexHeader), checksum);
+static int writeChecksum(void)
+{
+	size_t size = getFileSize(".tit/index");
+	FILE* fp = fopen(".tit/index", "ab+");
+	if(fp == NULL)
+	{
+		perror(".tit/index");
+		return -1;
+	}
 
-	// write checksum to index file:
-	fwrite(checksum, SHA_DIGEST_LENGTH, 1, fp);
+	unsigned char shaInputData[size];
+	unsigned char shaOutputData[SHA_DIGEST_LENGTH];
+
+	fread(shaInputData, size, 1, fp);
+	SHA1(shaInputData, size, shaOutputData);
+
+	fwrite(shaOutputData, SHA_DIGEST_LENGTH, 1, fp);
 
 	fclose(fp);
+	return 0;
+}
+
+indexHeader* initIndex(void)
+{
+	indexHeader* header = writeIndexHeader();
+	writeChecksum();
 
 	return header;
 }
 
 // create an indexEntry from a path to an object
-struct indexEntry* createIndexEntry(char* filePath)
+indexEntry* createIndexEntry(char* filePath)
 {
 	// make the object file
 	char* hashedObjectPath;
 	writeObject(filePath, hashedObjectPath);
 
 	// initialize an indexEntry, with the stuff from the file we have
-	struct indexEntry* entry = malloc(sizeof(struct indexEntry));
+	indexEntry* entry = malloc(sizeof(struct indexEntry));
 	if(entry == NULL) return NULL;
 
 	entry->mode = FILE_PERMS;
@@ -581,6 +600,12 @@ struct indexEntry* createIndexEntry(char* filePath)
 
 	free(hashedObjectPath);
 	return entry;
+}
+
+// add an indexEntry to the end of the .tit/index file
+int addEntryToIndex(indexHeader* header, indexEntry* entry)
+{
+	return 0;
 }
 
 // readIndex reads the file at .tit/index and outputs an array of entries in the file, and the count of them.
