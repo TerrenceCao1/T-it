@@ -42,7 +42,7 @@ struct indexEntry
 	
 	uint32_t mode; // this will just be FILE_PERMS
 	unsigned char sha1[20];
-	uint16_t flags; // just path length
+	uint16_t pathLen;
 	uint32_t file_size;
 	char* path;
 };

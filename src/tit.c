@@ -146,8 +146,15 @@ static uint8_t* buildBuffer(OBJECT_TYPE type, char* file, size_t* outLen)
 	return outBuffer;
 }
 
+static size_t getFileSize(char* file)
+{
+	FILE* fp = fopen(file, "rb");
+	fseek(fp, 0L, SEEK_END);
+	return ftell(fp);
+}
+
 // creates a object based on the file given
-static int writeObject(char* file)
+static int writeObject(char* file, char* finalDirOut)
 {
 	// construct file path for the object using the hash
 	uint8_t* hash = hashBlob(file, NULL);
@@ -182,6 +189,13 @@ static int writeObject(char* file)
 		size_t bufferLen = -1;
 		uint8_t* dataBuffer = buildBuffer(BLOB, file, &bufferLen);
 		compressBlobBuffer(dataBuffer, bufferLen, finalDir);
+	}
+
+	// if we need the outputed file path we have the option
+	if(finalDirOut)
+	{
+		finalDirOut = malloc(strlen(finalDir) + 1);
+		strcpy(finalDirOut, finalDir);
 	}
 	free(hash);
 	return 0;
@@ -224,7 +238,7 @@ uint8_t* hashBlob(char* file, _Bool write)
 
 	if(write)
 	{
-		writeObject(file);
+		writeObject(file, NULL);
 	}
 
 	free(buffer);
@@ -547,17 +561,26 @@ struct indexHeader* initIndex(void)
 }
 
 // create an indexEntry from a path to an object
-struct indexEntry* createIndexEntry(char* hashObjectPath)
+struct indexEntry* createIndexEntry(char* filePath)
 {
+	// make the object file
+	char* hashedObjectPath;
+	writeObject(filePath, hashedObjectPath);
+
 	// initialize an indexEntry, with the stuff from the file we have
 	struct indexEntry* entry = malloc(sizeof(struct indexEntry));
 	if(entry == NULL) return NULL;
 
 	entry->mode = FILE_PERMS;
+	entry->pathLen = strlen(filePath);
+	entry->path = filePath;
+	entry->file_size = getFileSize(filePath);
 
-	// filling in entry->sha1
-	unsigned char* sha1Hash[20];
+	uint8_t* sha1 = hashBlob(filePath, FALSE);
+	memcpy(entry->sha1, sha1, SHA_DIGEST_LENGTH);
 
+	free(hashedObjectPath);
+	return entry;
 }
 
 // readIndex reads the file at .tit/index and outputs an array of entries in the file, and the count of them.
