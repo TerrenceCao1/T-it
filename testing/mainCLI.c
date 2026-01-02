@@ -1,14 +1,15 @@
 #include <openssl/sha.h>
 #include <sha2.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
-#include <errno.h>
 #include <linux/limits.h>
-#include "tit.h"
+#include "init.h"
+#include "hash-object.h"
+#include "cat-file.h"
+#include "add.h"
 
 int main(int argc, char** argv)
 {

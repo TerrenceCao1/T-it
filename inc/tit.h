@@ -34,12 +34,6 @@ typedef struct indexHeader
 
 typedef struct indexEntry
 {
-	// mode
-	// sha1 hash of blob
-	// flags - path length
-	// file_size
-	// path
-	
 	uint32_t mode; // this will just be FILE_PERMS
 	unsigned char sha1[20];
 	uint16_t pathLen;
@@ -101,6 +95,8 @@ int compressBlobBuffer(uint8_t* dataBuffer, size_t dataLen, char* fileOut);
  * */
 int catFile(char* hash, _Bool type, _Bool size, _Bool blob);
 
-struct indexHeader* initIndex(void);
+int initIndex(void);
+
+int readIndex(struct indexEntry** entries, size_t* count);
 
 #endif

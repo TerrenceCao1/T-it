@@ -326,7 +326,6 @@ int compressBlobBuffer(uint8_t* dataBuffer, size_t dataLen, char* fileOut)
 
 // TIT CAT-FILE and HELPER FUNCTIONS:
 
-
 int decompressBlob(char* fileIn)
 {
 	FILE* inFile = fopen(fileIn, "rb");
@@ -524,29 +523,24 @@ int catFile(char* hash, _Bool type, _Bool size, _Bool blob)
 
 // this function initiates an index header (caller must free!), and makes the index file
 // There is only ONE index header (that is global and updates whenever an entry is added/rmed)
-static indexHeader* writeIndexHeader(void)
+static int writeIndexHeader(uint32_t entryCount)
 {
-	// making header defaults
-	struct indexHeader* header = malloc(sizeof(indexHeader));
-	memcpy(header->signature, "DIRC", 4);
-	header->version = htonl(2);
-	header->entry_count = htonl(0);
-
 	// creating the index file
 	FILE* fp = fopen(".tit/index", "ab");
 	if(fp == NULL)
 	{
 		perror(".tit/index");
-		return NULL;
+		return -1;
 	}
 
-	// write the header to the index file:
-	fwrite(header->signature, 1, 4, fp);
-	fwrite(&header->version, 4, 1, fp);
-	fwrite(&header->entry_count, 4, 1, fp);
+	uint32_t version = htonl(2);
+	entryCount = htonl(entryCount);
+	fwrite("DIRC", 1, 4, fp);
+	fwrite(&version, 4, 1, fp);
+	fwrite(&entryCount, 4, 1, fp);
 
 	fclose(fp);
-	return header;
+	return 0;
 }
 
 static int writeChecksum(void)
@@ -571,12 +565,12 @@ static int writeChecksum(void)
 	return 0;
 }
 
-indexHeader* initIndex(void)
+int initIndex(void)
 {
-	indexHeader* header = writeIndexHeader();
+	if(writeIndexHeader(0) == -1) return -1;
 	writeChecksum();
 
-	return header;
+	return 0;
 }
 
 // create an indexEntry from a path to an object
@@ -602,11 +596,45 @@ indexEntry* createIndexEntry(char* filePath)
 	return entry;
 }
 
-// add an indexEntry to the end of the .tit/index file
-int addEntryToIndex(indexHeader* header, indexEntry* entry)
+// readIndex reads the file at .tit/index and outputs an array of entries in the file, and the count of them.
+int readIndex(struct indexEntry** entries, size_t* count)
 {
+	// defaults
+	*entries = NULL;
+	*count = 0; 
+
+
+	FILE* fp = fopen(".tit/index", "rb");
+	if(!fp) return 0; // empty index is ok also
+
+	long fileSize = getFileSize(".tit/index");
+
+	// read and validate the header:
+	indexHeader hdr;
+	fread(&hdr, 1, 12, fp);
+
+	if(memcmp(hdr.signature, "DIRC", 4) != 0)
+	{
+		printf("INVALID INDEX HEADER!\n");
+		return -1;
+	}
+
+	uint32_t version = ntohl(hdr.version);
+	*count = ntohl(hdr.entry_count);
+
+	if(version != 2)
+	{
+		printf("Unsupported version!\n");
+		return -1;
+	}
+
 	return 0;
 }
 
-// readIndex reads the file at .tit/index and outputs an array of entries in the file, and the count of them.
-static int readIndex(struct indexEntry** entries, size_t* count);
+
+
+// add an indexEntry to the end of the .tit/index file
+// check the index for an entry containing the current file path
+// if it doesn't exist, add the bytes to the end
+// if it does, delete the previous entry and add the bytes to the end
+int addEntryToIndex(indexEntry* entry);
