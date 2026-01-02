@@ -82,7 +82,7 @@ static size_t getFileSize(char* file)
 }
 
 // creates a object based on the file given
-static int writeObject(char* file, char* finalDirOut)
+int writeObject(char* file, char* finalDirOut)
 {
 	// construct file path for the object using the hash
 	uint8_t* hash = hashBlob(file, NULL);

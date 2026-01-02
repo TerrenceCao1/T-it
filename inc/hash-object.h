@@ -42,4 +42,16 @@ uint8_t* hashBlob(char* file, _Bool write);
  * */
 int compressBlobBuffer(uint8_t* dataBuffer, size_t dataLen, char* fileOut);
 
+/*
+ * @brief	writing a file to .tit/objects
+ *
+ * @param	file - string w file name
+ *
+ * @parm	finalDirOut - optional argument if we want to return the final directory out
+ *
+ * @return	0 if it works -1 if it doesn't
+ *
+ */
+
+int writeObject(char* file, char* finalDirOut);
 #endif
