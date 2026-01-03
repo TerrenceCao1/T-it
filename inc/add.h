@@ -28,5 +28,6 @@ int initIndex(void);
 
 int readIndex(struct indexEntry** entries, size_t* count);
 
+int freeEntriesArr(struct indexEntry** entries, size_t count);
 
 #endif
