@@ -74,13 +74,6 @@ static uint8_t* buildBuffer(OBJECT_TYPE type, char* file, size_t* outLen)
 	return outBuffer;
 }
 
-static size_t getFileSize(char* file)
-{
-	FILE* fp = fopen(file, "rb");
-	fseek(fp, 0L, SEEK_END);
-	return ftell(fp);
-}
-
 // creates a object based on the file given
 int writeObject(char* file, char* finalDirOut)
 {

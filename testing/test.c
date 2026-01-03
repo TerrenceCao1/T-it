@@ -4,7 +4,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <linux/limits.h>
-#include "tit.h"
+#include "init.h"
+#include "add.h"
 
 int main(void)
 {
@@ -13,5 +14,12 @@ int main(void)
 	init(cwd);
 
 	initIndex();
+
+	struct indexEntry* entries = NULL;
+	size_t count = 0;
+	readIndex(&entries, &count);
+
+	freeEntriesArr(&entries, count);
+
 	return 0;
 }
