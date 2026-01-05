@@ -149,6 +149,8 @@ int main(int argc, char** argv)
 		struct indexEntry* entries = NULL;
 		size_t count = 0;
 		addFile(argv[2], &entries, &count);
+
+		freeEntriesArr(&entries, count);
 	}
 
 	else
