@@ -129,6 +129,28 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
+	// ADD blobs
+	if(strcmp(argv[1], "add") == 0)
+	{
+		// NO FLAGS!
+		if(argc > 3)
+		{
+			printf("No modifiers, simply use 'tit add [FILE_NAME]\n");
+			return -1;
+		}
+
+		// if they just do 'tit add'
+		if(argc == 2)
+		{
+			printf("'tit add' adds a file to the index, or staging area. Please specify a file that you wish to add to your repository.\n");
+			return -1;
+		}
+
+		struct indexEntry* entries = NULL;
+		size_t count = 0;
+		addFile(argv[2], &entries, &count);
+	}
+
 	else
 	{
 		printf("INVALID COMMAND or INPUTS!\n");

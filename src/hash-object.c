@@ -81,6 +81,7 @@ int writeObject(char* file, char* finalDirOut)
 	uint8_t* hash = hashBlob(file, NULL);
 	if(hash == NULL)
 	{
+		printf("Couldn't Create Hash.\n");
 		return -1;
 	}
 	char dir[3]; // 2 for the hex and one for the null term.
@@ -154,6 +155,16 @@ uint8_t* hashBlob(char* file, _Bool write)
 		return NULL;
 	}
 	fclose(fp);
+
+	// check if it's a directory and not a file (NOT ALLOWED)
+	struct stat path_stat;
+	stat(file, &path_stat);
+	if(S_ISDIR(path_stat.st_mode))
+	{
+		printf("%s is a directory, please input just a file.\n", file);
+		return NULL;
+	}
+
 
 	size_t buffSize;
 

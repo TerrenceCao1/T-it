@@ -312,8 +312,14 @@ int addFile(char* file, struct indexEntry** entries, size_t* count)
 		printf("Invalid File.\n");
 		return -1;
 	}
-	addEntryToIndex(entries, count, *entry);
-	writeIndex(entries, count);
+	if(addEntryToIndex(entries, count, *entry) == -1)
+	{
+		return -1;
+	}
+	if(writeIndex(entries, count) == -1)
+	{
+		return -1;
+	}
 
 	return 0;
 }

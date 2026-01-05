@@ -30,4 +30,6 @@ int readIndex(struct indexEntry** entries, size_t* count);
 
 int freeEntriesArr(struct indexEntry** entries, size_t count);
 
+int addFile(char* file, struct indexEntry** entries, size_t* count);
+
 #endif
