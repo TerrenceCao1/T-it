@@ -151,6 +151,29 @@ int main(int argc, char** argv)
 		addFile(argv[2], &entries, &count);
 
 		freeEntriesArr(&entries, count);
+		return 0;
+	}
+
+	// RM files from the thing
+	if(strcmp(argv[1], "rm") == 0)
+	{
+		// NO FLAGS!
+		if(argc > 3)
+		{
+			printf("No modifiers, simply use 'tit rm [FILE_NAME]\n");
+			return -1;
+		}
+
+		// if they just do 'tit rm'
+		if(argc == 2)
+		{
+			printf("'tit rm' removes a file from the index, or staging area. Please specify a file that you wish to rm from your repository.\n");
+			return -1;
+		}
+
+		struct indexEntry* entries = NULL;
+		size_t count = 0;
+		removeEntryFromIndex(argv[2], &entries, &count);
 	}
 
 	else

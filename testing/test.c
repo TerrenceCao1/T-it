@@ -20,9 +20,10 @@ int main(void)
 	readIndex(&entries, &count);
 
 	addFile("README.md", &entries, &count);
+	addFile("README.md", &entries, &count);
 	addFile("src/add.c", &entries, &count);
-	addFile("inc/add.h", &entries, &count);
-	readIndex(&entries, &count);
+
+	removeEntryFromIndex("README.md", &entries, &count);
 
 	freeEntriesArr(&entries, count);
 

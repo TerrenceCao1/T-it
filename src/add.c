@@ -323,3 +323,39 @@ int addFile(char* file, struct indexEntry** entries, size_t* count)
 
 	return 0;
 }
+
+// REMOVING STUFF
+int removeEntryFromIndex(char* file, struct indexEntry** entries, size_t* count)
+{
+	readIndex(entries, count);
+
+	// iterate through to find the file
+	for(int i = 0; i < *count; i++)
+	{
+		if(strcmp((*entries)[i].path, file) == 0)
+		{
+			// remove this entry and memmove everything else back 
+			free((*entries)[i].path);
+
+			// move everything back
+			memmove(&(*entries)[i], 
+					&(*entries)[i+1], 
+					(*count - i - 1) * sizeof(struct indexEntry));
+
+			(*count)--;
+			struct indexEntry *temp = realloc(*entries, (*count) * sizeof(struct indexEntry));
+
+			if(!temp && *count > 1) // allocation error
+			{
+				return -1;
+			}
+			*entries = temp;
+
+			// write to the index
+			writeIndex(entries, count);
+			return 0;
+		}
+	}
+
+	return -1;
+}
