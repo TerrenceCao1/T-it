@@ -79,6 +79,10 @@ int writeObject(char* file, char* finalDirOut)
 {
 	// construct file path for the object using the hash
 	uint8_t* hash = hashBlob(file, NULL);
+	if(hash == NULL)
+	{
+		return -1;
+	}
 	char dir[3]; // 2 for the hex and one for the null term.
 	sprintf(dir, "%02x", hash[0]);
 

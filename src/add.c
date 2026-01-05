@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <linux/limits.h>
@@ -85,8 +86,10 @@ int initIndex(void)
 indexEntry* createIndexEntry(char* filePath)
 {
 	// make the object file
-	char* hashedObjectPath;
-	writeObject(filePath, hashedObjectPath);
+	if(writeObject(filePath, NULL) == -1)
+	{
+		return NULL;
+	}
 
 	// initialize an indexEntry, with the stuff from the file we have
 	indexEntry* entry = malloc(sizeof(struct indexEntry));
@@ -94,13 +97,12 @@ indexEntry* createIndexEntry(char* filePath)
 
 	entry->mode = FILE_PERMS;
 	entry->pathLen = strlen(filePath);
-	entry->path = filePath;
+	entry->path = strdup(filePath);
 	entry->file_size = getFileSize(filePath);
 
 	uint8_t* sha1 = hashBlob(filePath, FALSE);
 	memcpy(entry->sha1, sha1, SHA_DIGEST_LENGTH);
 
-	free(hashedObjectPath);
 	return entry;
 }
 
@@ -169,11 +171,11 @@ int readIndex(struct indexEntry** entries, size_t* count)
 		fread((*entries)[i].sha1, 20, 1, fp);
 
 		// get the pathLen from the flags
-		fread(&temp, 4, 1, fp);
+		fread(&temp, 2, 1, fp);
 		(*entries)[i].pathLen = temp;
 
 		// KEEP PATH!
-		uint32_t pathLen = temp;
+		uint16_t pathLen = temp;
 		(*entries)[i].path = malloc((pathLen + 1) * sizeof(char));
 		fread((*entries)[i].path, pathLen, 1, fp);
 		(*entries)[i].path[pathLen] = '\0';
@@ -188,8 +190,8 @@ int readIndex(struct indexEntry** entries, size_t* count)
 		}
 
 		// Consume the padding - with formula (8 - (entryLen % 8) % 8)
-		int entryLen = 32 + pathLen + 1;
-		int padding = (8 - (entryLen % 8) % 8);
+		int entryLen = 30 + pathLen + 1;
+		int padding = (8 - (entryLen % 8)) % 8;
 
 		fseek(fp, padding, SEEK_CUR);
 	}
@@ -207,14 +209,14 @@ int readIndex(struct indexEntry** entries, size_t* count)
 
 int freeEntriesArr(struct indexEntry** entries, size_t count)
 {
-	if(!entries) return -1;
+	if(!entries || !*entries) return -1;
 	if(count == 0) return 0;
 
 	for(int i = 0; i < count; i++)
 	{
-		free((*entries)->path);
+		free((*entries)[i].path);
 	}
-	free(entries);
+	free(*entries);
 	return 0;
 }
 
@@ -268,7 +270,7 @@ int writeIndex(struct indexEntry** entries, size_t* count)
 	}
 
 	// sort the entires so we have alphabetical order
-	qsort(entries, *count, sizeof(indexEntry), cmp_entries);
+	qsort(*entries, *count, sizeof(indexEntry), cmp_entries);
 
 	FILE* fp = fopen(".tit/index", "ab");
 	if(fp == NULL)
@@ -279,11 +281,18 @@ int writeIndex(struct indexEntry** entries, size_t* count)
 	// write the entries to .tit/index
 	for(int i = 0; i < *count; i++)
 	{
-		fwrite(&(entries[i]->mode), 4, 1, fp);
-		fwrite(&(entries[i]->file_size), 4, 1, fp);
-		fwrite(&(entries[i]->sha1), 20, 1, fp);
-		fwrite(&(entries[i]->pathLen), 2, 1, fp);
-		fwrite(&(entries[i]->path), strlen(entries[i]->path) + 1, 1, fp);
+		fwrite(&((*entries)[i].mode), 4, 1, fp);
+		fwrite(&((*entries)[i].file_size), 4, 1, fp);
+		fwrite(&((*entries)[i].sha1), 20, 1, fp);
+		fwrite(&((*entries)[i].pathLen), 2, 1, fp);
+		fwrite((*entries)[i].path, (*entries)[i].pathLen + 1, 1, fp);
+
+		int entryLen = 30 + (*entries)[i].pathLen + 1;
+		int padding = (8 - (entryLen % 8)) % 8;
+		for(int p = 0; p < padding; p++)
+		{
+			fputc('\0', fp);
+		}
 	}
 	fclose(fp);
 
@@ -295,3 +304,16 @@ int writeIndex(struct indexEntry** entries, size_t* count)
 	return 0;
 }
 
+int addFile(char* file, struct indexEntry** entries, size_t* count)
+{
+	struct indexEntry* entry = createIndexEntry(file); 
+	if(entry == NULL)
+	{
+		printf("Invalid File.\n");
+		return -1;
+	}
+	addEntryToIndex(entries, count, *entry);
+	writeIndex(entries, count);
+
+	return 0;
+}

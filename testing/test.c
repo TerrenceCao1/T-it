@@ -19,6 +19,11 @@ int main(void)
 	size_t count = 0;
 	readIndex(&entries, &count);
 
+	addFile("README.md", &entries, &count);
+	addFile("src/add.c", &entries, &count);
+	addFile("inc/add.h", &entries, &count);
+	readIndex(&entries, &count);
+
 	freeEntriesArr(&entries, count);
 
 	return 0;
