@@ -208,6 +208,7 @@ int readIndex(struct indexEntry** entries, size_t* count)
 int freeEntriesArr(struct indexEntry** entries, size_t count)
 {
 	if(!entries) return -1;
+	if(count == 0) return 0;
 
 	for(int i = 0; i < count; i++)
 	{
@@ -217,9 +218,80 @@ int freeEntriesArr(struct indexEntry** entries, size_t count)
 	return 0;
 }
 
+int addEntryToIndex(struct indexEntry** entries, size_t* count, indexEntry entry)
+{
+	readIndex(entries, count);
 
-// add an indexEntry to the end of the .tit/index file
-// check the index for an entry containing the current file path
-// if it doesn't exist, add the bytes to the end
-// if it does, delete the previous entry and add the bytes to the end
-int addEntryToIndex(indexEntry* entry);
+	// iterate through list and see if there's a replacement
+	for(int i = 0; i < *count; i++)
+	{
+		if(strcmp((*entries)[i].path, entry.path) == 0)
+		{
+			free((*entries)[i].path);
+			(*entries)[i] = entry;
+			return 0;
+		}
+	}
+
+	struct indexEntry *temp = realloc(*entries, (*count + 1) * sizeof(struct indexEntry));
+	if (!temp) return -1;
+
+	// append it on WE WILL SORT LATER!
+	*entries = temp;
+	(*entries)[*count] = entry;
+	(*count)++;
+
+	return 0;
+}
+
+// Comparing entries for qsort
+static int cmp_entries(const void *a, const void *b)
+{
+	const indexEntry *ea = a;
+	const indexEntry *eb = b;
+	return strcmp(ea->path, eb->path);
+}
+
+/*
+ * ENTRY FORMAT:
+ * 32-bit mode (KEEP)
+ * 32-bit file size (KEEP)
+ * 20 BYTE SHA1 hash
+ * 16-bit pathLen
+ * variable-len PathName
+ */
+int writeIndex(struct indexEntry** entries, size_t* count)
+{
+	if(writeIndexHeader(*count) == -1)
+	{
+		return -1;
+	}
+
+	// sort the entires so we have alphabetical order
+	qsort(entries, *count, sizeof(indexEntry), cmp_entries);
+
+	FILE* fp = fopen(".tit/index", "ab");
+	if(fp == NULL)
+	{
+		return -1;
+	}
+
+	// write the entries to .tit/index
+	for(int i = 0; i < *count; i++)
+	{
+		fwrite(&(entries[i]->mode), 4, 1, fp);
+		fwrite(&(entries[i]->file_size), 4, 1, fp);
+		fwrite(&(entries[i]->sha1), 20, 1, fp);
+		fwrite(&(entries[i]->pathLen), 2, 1, fp);
+		fwrite(&(entries[i]->path), strlen(entries[i]->path) + 1, 1, fp);
+	}
+	fclose(fp);
+
+	if(writeChecksum() == -1)
+	{
+		return -1;
+	}
+
+	return 0;
+}
+
