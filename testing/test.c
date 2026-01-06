@@ -6,6 +6,7 @@
 #include <linux/limits.h>
 #include "init.h"
 #include "add.h"
+#include "write-tree.h"
 
 int main(void)
 {
@@ -24,6 +25,7 @@ int main(void)
 	addFile("src/add.c", &entries, &count);
 
 	removeEntryFromIndex("README.md", &entries, &count);
+	writeTree();
 
 	freeEntriesArr(&entries, count);
 
