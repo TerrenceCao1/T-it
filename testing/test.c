@@ -24,7 +24,6 @@ int main(void)
 	addFile("README.md", &entries, &count);
 	addFile("src/add.c", &entries, &count);
 
-	removeEntryFromIndex("README.md", &entries, &count);
 	writeTree();
 
 	freeEntriesArr(&entries, count);
