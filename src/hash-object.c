@@ -165,7 +165,6 @@ uint8_t* hashBlob(char* file, _Bool write)
 		return NULL;
 	}
 
-
 	size_t buffSize;
 
 	uint8_t* buffer = buildBuffer(BLOB, file, &buffSize);
