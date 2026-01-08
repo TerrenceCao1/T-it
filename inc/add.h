@@ -68,9 +68,15 @@ int freeEntriesArr(struct indexEntry** entries, size_t count);
 int addFile(char* file, struct indexEntry** entries, size_t* count);
 
 /*
-* 
+* @brief	rm a tile from the index
 *
+* @param	file - file name to be removed
 *
+* @param	entries - array of indexEntries used to add files
+*
+* @param	count - pointer to size_t entry counter
+*
+* @return	0 if successful, -1 if not
 */
 int removeEntryFromIndex(char* file, struct indexEntry** entries, size_t* count);
 
