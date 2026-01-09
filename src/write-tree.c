@@ -24,6 +24,24 @@ static int cmp_entries(const void *a, const void *b)
 	return strcmp(ea->path, eb->path);
 }
 
+static uint8_t* hashTree(size_t treeSize)
+{
+	// put all file contents into a buffer for hashing 
+	uint8_t* hash = (uint8_t*)calloc(SHA_DIGEST_LENGTH, sizeof(uint8_t));
+	uint8_t buffer[treeSize];
+
+	FILE* fp = fopen(".tit/temp/treeWriter", "rb");
+	if(!fp) return NULL;
+
+	// populate buffer
+	fread(buffer, sizeof(buffer[0]), treeSize, fp);
+	fclose(fp);
+
+	SHA1(buffer, treeSize, hash);
+
+	return hash;
+}
+
 int writeTree(_Bool write)
 {
 	// get our entries
@@ -111,23 +129,7 @@ int writeTree(_Bool write)
 	return 0;
 }
 
-uint8_t* hashTree(size_t treeSize)
-{
-	// put all file contents into a buffer for hashing 
-	uint8_t* hash = (uint8_t*)calloc(SHA_DIGEST_LENGTH, sizeof(uint8_t));
-	uint8_t buffer[treeSize];
 
-	FILE* fp = fopen(".tit/temp/treeWriter", "rb");
-	if(!fp) return NULL;
-
-	// populate buffer
-	fread(buffer, sizeof(buffer[0]), treeSize, fp);
-	fclose(fp);
-
-	SHA1(buffer, treeSize, hash);
-
-	return hash;
-}
 
 int compressFile(char* fileIn, char* fileOut)
 {
