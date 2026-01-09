@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-int writeTree(void);
+int writeTree(_Bool write);
 
 uint8_t* hashTree(size_t treeSize);
 

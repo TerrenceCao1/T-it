@@ -24,7 +24,7 @@ static int cmp_entries(const void *a, const void *b)
 	return strcmp(ea->path, eb->path);
 }
 
-int writeTree(void)
+int writeTree(_Bool write)
 {
 	// get our entries
 	struct indexEntry* entries;
@@ -68,38 +68,44 @@ int writeTree(void)
 	uint8_t* hash = hashTree(treeSize);
 	if(hash == NULL) return -1;
 
-	// make dir
-	char dir[3];
-	sprintf(dir, "%02x", hash[0]);
-
-	char finalDir[100] = ".tit/objects/";
-	strcat(finalDir, dir);
-	strcat(finalDir, "/");
-
-	if(mkdir(finalDir, FILE_PERMS) == 0)
+	if(write)
 	{
-		char fileName[SHA_DIGEST_LENGTH * 2] = "";
-		char temp[3];
-		for(int i = 1; i < SHA_DIGEST_LENGTH; i++)
-		{
-			sprintf(temp, "%02x", hash[i]);
-			strcat(fileName, temp);
-		}
+		char dir[3];
+		sprintf(dir, "%02x", hash[0]);
 
-		// append our filename to finalDir
-		strcat(finalDir, fileName);
-		FILE* fp = fopen(finalDir, "wb");
-		if(fp == NULL)
-		{
-			perror(fileName);
-			return -1;
-		}
-		// printf("directory made: %s\n", finalDir);
+		char finalDir[100] = ".tit/objects/";
+		strcat(finalDir, dir);
+		strcat(finalDir, "/");
 
-		if(compressFile(".tit/temp/treeWriter", finalDir) != Z_OK)
+		if(mkdir(finalDir, FILE_PERMS) == 0)
 		{
-			return -1;
+			char fileName[SHA_DIGEST_LENGTH * 2] = "";
+			char temp[3];
+			for(int i = 1; i < SHA_DIGEST_LENGTH; i++)
+			{
+				sprintf(temp, "%02x", hash[i]);
+				strcat(fileName, temp);
+			}
+
+			// append our filename to finalDir
+			strcat(finalDir, fileName);
+			FILE* fp = fopen(finalDir, "wb");
+			if(fp == NULL)
+			{
+				perror(fileName);
+				return -1;
+			}
+			// printf("directory made: %s\n", finalDir);
+
+			if(compressFile(".tit/temp/treeWriter", finalDir) != Z_OK)
+			{
+				return -1;
+			}
 		}
+	}
+	for(int i = 0; i < SHA_DIGEST_LENGTH; i++)
+	{
+		printf("%02x", hash[i]);
 	}
 	free(hash);
 	return 0;

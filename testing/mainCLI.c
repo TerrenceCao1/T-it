@@ -10,6 +10,7 @@
 #include "hash-object.h"
 #include "cat-file.h"
 #include "add.h"
+#include "write-tree.h"
 
 int main(int argc, char** argv)
 {
@@ -36,7 +37,7 @@ int main(int argc, char** argv)
 	}
 
 	// HASH_BLOB
-	if(strcmp(argv[1], "hash-object") == 0)
+	else if(strcmp(argv[1], "hash-object") == 0)
 	{
 		if(argc < 3) // they didn't include a file
 		{
@@ -87,7 +88,7 @@ int main(int argc, char** argv)
 	}
 
 	// CAT-FILE for blobs
-	if(strcmp(argv[1], "cat-file") == 0)
+	else if(strcmp(argv[1], "cat-file") == 0)
 	{
 		// for blobs: 
 		// -t means type
@@ -125,12 +126,17 @@ int main(int argc, char** argv)
 			printf("Input a hash for a file please.\n");
 			return -1;
 		}
+		if(!typeFlag && !sizeFlag && !blobFlag)
+		{
+			printf("Give a flag! '-t' for type, '-s' for size, 'blob' to print out the blob!\n");
+			return -1;
+		}
 		catFile(argv[hashIndex], typeFlag, sizeFlag, blobFlag);
 		return 0;
 	}
 
 	// ADD blobs
-	if(strcmp(argv[1], "add") == 0)
+	else if(strcmp(argv[1], "add") == 0)
 	{
 		// NO FLAGS!
 		if(argc > 3)
@@ -155,7 +161,7 @@ int main(int argc, char** argv)
 	}
 
 	// RM files from the thing
-	if(strcmp(argv[1], "rm") == 0)
+	else if(strcmp(argv[1], "rm") == 0)
 	{
 		// NO FLAGS!
 		if(argc > 3)
@@ -174,6 +180,18 @@ int main(int argc, char** argv)
 		struct indexEntry* entries = NULL;
 		size_t count = 0;
 		removeEntryFromIndex(argv[2], &entries, &count);
+	}
+
+	// WRITE-TREE
+	else if(strcmp(argv[1], "write-tree") == 0)
+	{
+		// too many flags - write-tree only has one 
+		if(argc > 2)
+		{
+			printf("'tit write-tree' takes NO arguments\n");
+		}
+
+		writeTree(TRUE);
 	}
 
 	else
