@@ -22,8 +22,9 @@ int main(void)
 	addFile("README.md", &entries, &count);
 	addFile("src/add.c", &entries, &count);
 
-	writeTree();
+	uint8_t* treeHash = writeTree(TRUE);
 
+	free(treeHash);
 	freeEntriesArr(&entries, count);
 
 	return 0;

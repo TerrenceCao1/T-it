@@ -42,7 +42,7 @@ static uint8_t* hashTree(size_t treeSize)
 	return hash;
 }
 
-int writeTree(_Bool write)
+uint8_t* writeTree(_Bool write)
 {
 	// get our entries
 	struct indexEntry* entries;
@@ -54,7 +54,7 @@ int writeTree(_Bool write)
 
 	// write relevant info to a temp file
 	FILE* fp = fopen(".tit/temp/treeWriter", "wb");
-	if(!fp) return -1;
+	if(!fp) return NULL;
 
 	// compute entries size
 	size_t entriesSize = 0;
@@ -84,7 +84,7 @@ int writeTree(_Bool write)
 	// entries + 5 for "tree " + length of entriesSize
 	size_t treeSize = entriesSize + 5 + floor(log10(entriesSize));
 	uint8_t* hash = hashTree(treeSize);
-	if(hash == NULL) return -1;
+	if(hash == NULL) return NULL;
 
 	if(write)
 	{
@@ -111,22 +111,23 @@ int writeTree(_Bool write)
 			if(fp == NULL)
 			{
 				perror(fileName);
-				return -1;
+				return NULL;
 			}
 			// printf("directory made: %s\n", finalDir);
 
 			if(compressFile(".tit/temp/treeWriter", finalDir) != Z_OK)
 			{
-				return -1;
+				return NULL;
 			}
 		}
 	}
+	/*
 	for(int i = 0; i < SHA_DIGEST_LENGTH; i++)
 	{
 		printf("%02x", hash[i]);
 	}
-	free(hash);
-	return 0;
+	*/
+	return hash;
 }
 
 

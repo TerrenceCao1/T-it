@@ -1,6 +1,7 @@
 #include <openssl/sha.h>
 #include <sha2.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -78,6 +79,7 @@ int main(int argc, char** argv)
 			{
 				printf("%02x", hash[i]);
 			}
+			free(hash);
 		}
 		else
 		{
@@ -180,6 +182,8 @@ int main(int argc, char** argv)
 		struct indexEntry* entries = NULL;
 		size_t count = 0;
 		removeEntryFromIndex(argv[2], &entries, &count);
+
+		freeEntriesArr(&entries, count);
 	}
 
 	// WRITE-TREE
@@ -191,7 +195,13 @@ int main(int argc, char** argv)
 			printf("'tit write-tree' takes NO arguments\n");
 		}
 
-		writeTree(TRUE);
+		uint8_t* treeHash = writeTree(TRUE);
+		for(int i = 0; i < SHA_DIGEST_LENGTH; i++)
+		{
+			printf("%02x", treeHash[i]);
+		}
+
+		free(treeHash);
 	}
 
 	else

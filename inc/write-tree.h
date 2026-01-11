@@ -9,9 +9,9 @@
 *
 * @param	write - bool on whether to write it or not
 *
-* @return	0 if success, 1 if not
+* @return	hash of tree
 */
-int writeTree(_Bool write);
+uint8_t* writeTree(_Bool write);
 
 /*
 * @brief	compresses a file using zlib and puts it into the fileOut
