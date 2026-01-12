@@ -33,7 +33,7 @@ static int initialize_repo(const char* path)
 		return -1;
 	}
 
-	fprintf(f, "ref: refs/heads/main\n");
+	fprintf(f, "refs/heads/main\n");
 	fclose(f);
 
 	return 0;

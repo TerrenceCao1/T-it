@@ -12,6 +12,7 @@
 #include "cat-file.h"
 #include "add.h"
 #include "write-tree.h"
+#include "commit.h"
 
 int main(int argc, char** argv)
 {
@@ -204,8 +205,18 @@ int main(int argc, char** argv)
 		free(treeHash);
 	}
 
-	else
+	else if(strcmp(argv[1], "commit") == 0)
 	{
+		if((strcmp(argv[2], "-m") != 0) || (argc != 4)) // we want ./tit commit -m "message"
+		{
+			printf("USAGE: tit commit -m \"Your message\"");
+			return -1;
+		}
+		commit(argv[3]);
+	}
+
+	else
+{
 		printf("INVALID COMMAND or INPUTS!\n");
 		return -1;
 	}

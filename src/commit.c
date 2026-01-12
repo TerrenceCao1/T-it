@@ -186,11 +186,38 @@ int commit(char* message)
 		{
 			return -1;
 		}
+		fclose(fp);
 	}
-	free(hash);
 
 	// UPDATE HEAD! 
-	
+	// if HEAD doesn't exist, this is bad...
+	fp = fopen(".tit/HEAD", "rb");
+	if(!fp)
+	{
+		return -1;
+	}
 
+	// Get the file path written in HEAD
+	fseek(fp, 0, SEEK_END);
+	int HEADLen = ftell(fp);
+	char filePathBuffer[HEADLen];
+
+	rewind(fp);
+	fread(filePathBuffer, HEADLen, 1, fp);
+	filePathBuffer[HEADLen - 1] = '\0';
+	fclose(fp);
+
+	char fullPath[256] = ".tit/";
+	strcat(fullPath, filePathBuffer);
+
+	// go to the path and read the SHA1
+	fp = fopen(fullPath, "wb");
+	if(!fp)
+	{
+		return -1;
+	}
+	fwrite(hash, SHA_DIGEST_LENGTH, 1, fp);
+
+	free(hash);
 	return 0;
 }
