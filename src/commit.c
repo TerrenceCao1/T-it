@@ -252,6 +252,13 @@ int commit(char* message)
 	fwrite(hashOut, 41, 1, fp);
 	fclose(fp);
 
+	// for printing stuff out when we commit!
+	char shortHash[8];
+	memcpy(shortHash, hashOut, 7);
+	shortHash[7] = '\0';
+
+	printf("[%s] %s", shortHash, message);
+
 	free(hash);
 	return 0;
 }
