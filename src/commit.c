@@ -85,7 +85,7 @@ static uint8_t* hashCommit(size_t commitSize)
 	uint8_t* hash = (uint8_t*)calloc(SHA_DIGEST_LENGTH, sizeof(uint8_t));
 	uint8_t buffer[commitSize];
 
-	FILE* fp = fopen(".tit/temp/commitWriter", "rb");
+	FILE* fp = fopen(".tit/temp/finalCommit", "rb");
 	if(!fp) return NULL;
 
 	// populate buffer
@@ -153,6 +153,29 @@ int commit(char* message)
 	size_t commitSize = ftell(fp);
 	fclose(fp);
 
+	// final commit with header!
+	FILE* finalCommitFile = fopen(".tit/temp/finalCommit", "ab");
+	if(!finalCommitFile)
+	{
+		return -1;
+	}
+	fprintf(finalCommitFile, "commit %lu", commitSize);
+	fputc('\0', finalCommitFile);
+
+	FILE* sourceFile = fopen(".tit/temp/commitWriter", "rb");
+	if(!sourceFile)
+	{
+		return -1;
+	}
+	char ch;
+	while((ch = fgetc(sourceFile)) != EOF)
+	{
+		fputc(ch, finalCommitFile);
+	}
+
+	fclose(finalCommitFile);
+	fclose(sourceFile);
+
 	uint8_t* hash = hashCommit(commitSize);
 
 	// make the directory for the commit to live in
@@ -182,7 +205,7 @@ int commit(char* message)
 		}
 
 		// compress the file and write to the object file
-		if(compressFile(".tit/temp/commitWriter", finalDir) != Z_OK)
+		if(compressFile(".tit/temp/finalCommit", finalDir) != Z_OK)
 		{
 			return -1;
 		}
@@ -216,7 +239,18 @@ int commit(char* message)
 	{
 		return -1;
 	}
-	fwrite(hash, SHA_DIGEST_LENGTH, 1, fp);
+
+	// write the hash as hex text, not pure hash binaries
+	char hashOut[SHA_DIGEST_LENGTH * 2 + 2];
+	for(int i = 0; i < SHA_DIGEST_LENGTH; i++)
+	{
+		sprintf(hashOut + (i * 2), "%02x", hash[i]);
+	}
+	hashOut[40] = '\n';
+	hashOut[41] = '\0';
+
+	fwrite(hashOut, 41, 1, fp);
+	fclose(fp);
 
 	free(hash);
 	return 0;
