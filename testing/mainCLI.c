@@ -205,6 +205,7 @@ int main(int argc, char** argv)
 		free(treeHash);
 	}
 
+	// COMMIT
 	else if(strcmp(argv[1], "commit") == 0)
 	{
 		if((strcmp(argv[2], "-m") != 0) || (argc != 4)) // we want ./tit commit -m "message"
@@ -216,7 +217,7 @@ int main(int argc, char** argv)
 	}
 
 	else
-{
+	{
 		printf("INVALID COMMAND or INPUTS!\n");
 		return -1;
 	}

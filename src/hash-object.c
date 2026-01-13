@@ -12,6 +12,7 @@
 #include <arpa/inet.h>
 #include <zlib.h>
 #include "hash-object.h"
+#include "cat-file.h"
 
 /*
  * This function builds the header in form: "<type> <size>"

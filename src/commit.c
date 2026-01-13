@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <time.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -13,6 +14,7 @@
 #include <arpa/inet.h>
 #include <zlib.h>
 #include "add.h"
+#include "cat-file.h"
 #include "hash-object.h"
 #include "write-tree.h"
 
@@ -29,16 +31,8 @@
 // COMMIT HASH:
 // "commit <size>\0" + <commit_content>
 
-// STEPS:
-// write the tree and store hash in commit obj
-// read the HEAD to find last commit
-//		if file exists, that is the parent SHA
-// build commit object (author, email, time, message)
-// hash and store commit
-// update HEAD
-
 // finds the parent commit from HEAD
-static uint8_t* findParentCommit(void)
+static char* findParentCommit(void)
 {
 	// if HEAD doesn't exist, this is bad...
 	FILE* fp = fopen(".tit/HEAD", "rb");
@@ -48,16 +42,20 @@ static uint8_t* findParentCommit(void)
 	}
 
 	// Get the file path written in HEAD
-	char filePathBuffer[100];
 	fseek(fp, 0, SEEK_END);
 	int HEADLen = ftell(fp);
+	char filePathBuffer[HEADLen - 1]; // cause there's a new line...
 
 	rewind(fp);
 	fread(filePathBuffer, HEADLen, 1, fp);
 	fclose(fp);
 
+	filePathBuffer[HEADLen - 1] = '\0';
+	char finalDir[100] = ".tit/";
+	strcat(finalDir, filePathBuffer);
+
 	// go to the path and read the SHA1
-	fp = fopen(filePathBuffer, "rb");
+	fp = fopen(finalDir, "rb");
 	if(!fp)
 	{
 		return NULL; // if the file pointed to in HEAD doesn't exist, then it's generally ok... we will create the file later in the commit function.
@@ -66,15 +64,17 @@ static uint8_t* findParentCommit(void)
 	// ERROR CHECK if the data in filePathBuffer isn't 20 things long, it isn't a valid SHA1.
 	fseek(fp, 0, SEEK_END);
 	int shaLen = ftell(fp);
-	if(shaLen != SHA_DIGEST_LENGTH)
+	if(shaLen != SHA_DIGEST_LENGTH * 2 + 1)
 	{
 		fclose(fp);
 		return NULL;
 	}
+	rewind(fp);
 
 	// read the sha1 hash
-	uint8_t* sha1Hash = malloc(SHA_DIGEST_LENGTH);
-	fread(sha1Hash, SHA_DIGEST_LENGTH, 1, fp);
+	char* sha1Hash = malloc(SHA_DIGEST_LENGTH * 2 + 1);
+	fread(sha1Hash, SHA_DIGEST_LENGTH * 2, 1, fp);
+	sha1Hash[SHA_DIGEST_LENGTH * 2] = '\0';
 	fclose(fp);
 
 	return sha1Hash;
@@ -97,6 +97,15 @@ static uint8_t* hashCommit(size_t commitSize)
 	return hash;
 }
 
+static void clearFile(char* file)
+{
+	FILE* fp = fopen(file, "w");
+	if(fp)
+	{
+		fclose(fp);
+	}
+	return;
+}
 
 /*
  * COMMIT FORMAT:
@@ -110,13 +119,14 @@ static uint8_t* hashCommit(size_t commitSize)
 int commit(char* message)
 {
 	// create temp file that we will manipulate to create a commit!
+	clearFile(".tit/temp/commitWriter");
+	clearFile(".tit/temp/finalCommit");
 	FILE* fp = fopen(".tit/temp/commitWriter", "ab");
 	if(!fp)
 	{
 		return -1;
 	}
 
-	// tree and tree hash in format: "tree <tree_sha>"
 	uint8_t* treeHash = writeTree(TRUE);
 	if(!treeHash)
 	{
@@ -125,22 +135,25 @@ int commit(char* message)
 	}
 
 	// actually write that john "tree <tree_sha>"
-	fprintf(fp, "tree ");
-	fwrite(treeHash, SHA_DIGEST_LENGTH, 1, fp);
+	fprintf(fp, "\ntree ");
+	for(int i = 0; i < SHA_DIGEST_LENGTH; i++)
+	{
+		fprintf(fp, "%02x", treeHash[i]);
+	}
 	free(treeHash);
 
 	// parent and parent hash
-	uint8_t* parentHash = findParentCommit();
+	char* parentHash = findParentCommit();
 	if(parentHash != NULL) // THIS IS NOT AN ERROR, it's the initial commit
 	{
 		fprintf(fp, "\nparent ");
-		fwrite(parentHash, SHA_DIGEST_LENGTH, 1, fp);
+		fwrite(parentHash, SHA_DIGEST_LENGTH * 2, 1, fp);
 		free(parentHash);
 	}
 
 	// AUTHOR AND COMMITTER... imma hard code this one
-	fprintf(fp, "\nauthor lil_bro <littlebrother@thisisascam.com> 1700000000 -0800");
-	fprintf(fp, "\ncommitter lil_bro <littlebrother@thisisascam.com> 1700000000 -0800");
+	fprintf(fp, "\nauthor Tcow <tcow@thisisnotarealemail.com> %u -0800", (unsigned)time(NULL));
+	fprintf(fp, "\ncommitter Tcow <tcow@thisisnotarealemail.com> %u -0800", (unsigned)time(NULL));
 
 	// Message (error checking the message will happen in CLI)
 	fprintf(fp, "\n\n%s", message);
@@ -257,7 +270,7 @@ int commit(char* message)
 	memcpy(shortHash, hashOut, 7);
 	shortHash[7] = '\0';
 
-	printf("[%s] %s", shortHash, message);
+	printf("committed [%s] %s", shortHash, message);
 
 	free(hash);
 	return 0;
