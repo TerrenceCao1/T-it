@@ -1,6 +1,7 @@
 #ifndef CAT_FILE_H
 #define CAT_FILE_H
 
+#include <openssl/sha.h>
 #include <stdint.h>
 
 #define FILE_PERMS 0755 // Owner can read/write/exec, Others can read/exed
@@ -11,7 +12,7 @@
 #define CHUNK 16384 // ZLIB CHUNK SIZE
 /*
  * @brief	prints out contents of a tit object to to stdout
- *
+*
  * @param	hash - the hash of the tit object 
  *
  * @param	type - flag for if we need to print type
@@ -25,5 +26,7 @@
  *
  * */
 int catFile(char* hash, _Bool type, _Bool size, _Bool blob);
+
+char* obtainObjectFileDir(char* hash);
 
 #endif

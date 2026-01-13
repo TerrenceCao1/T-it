@@ -88,6 +88,27 @@ int decompressBlob(char* fileIn)
 	return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
 }
 
+char* obtainObjectFileDir(char* hash)
+{
+	if(strlen(hash) != SHA_DIGEST_LENGTH * 2)
+	{
+		printf("Invalid Hash. Hash must be 40 chars long\n");
+		return NULL;
+	}
+
+	char* directory = malloc(20 + SHA_DIGEST_LENGTH * 2 + 1); // 4 for .tit, 1 for /, 7 for objects, 2 for /'s, SHA_DIGEST_LENGTH * 2 for hash, 1 for NULL
+	
+	sprintf(directory, ".tit/objects/");
+	char folder[4];
+	sprintf(folder, "%c%c/", hash[0], hash[1]);
+	strcat(directory, folder);
+
+	memcpy(directory + strlen(directory), hash + 2, 2 * SHA256_192_DIGEST_LENGTH - 2);
+	directory[strlen(directory)] = '\0';
+	
+	return directory;
+}
+
 int catFile(char* hash, _Bool type, _Bool size, _Bool blob)
 {
 	// ERROR CHECKS:
@@ -97,19 +118,12 @@ int catFile(char* hash, _Bool type, _Bool size, _Bool blob)
 		printf("Invalid Hash. Hash must be 40 chars long\n");
 		return -1;
 	}
-	char hashedFileName[80]; // ".tit/objects/xx/<38 hex digits>"
-	sprintf(hashedFileName, ".tit/objects/");
-
-	// add the folder to the hashedFileName location template
-	char folder[4];
-	sprintf(folder, "%c%c/", hash[0], hash[1]);
-	strcat(hashedFileName, folder);
-
-	memcpy(hashedFileName + strlen(hashedFileName), hash + 2, 2 * SHA_DIGEST_LENGTH - 2);
-	hashedFileName[strlen(hashedFileName)] = '\0';
+	char* hashedFileName = obtainObjectFileDir(hash);
 
 	// decompress the contents of the file (gets saved to binary file ".tit/temp/out")
 	if(decompressBlob(hashedFileName) != Z_OK) return -1;
+
+	free(hashedFileName);
 
 	// then we print out all the contents of the decompressed file
 	FILE* fp = fopen(".tit/temp/out", "rb");
