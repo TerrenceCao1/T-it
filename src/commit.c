@@ -32,7 +32,7 @@
 // "commit <size>\0" + <commit_content>
 
 // finds the parent commit from HEAD
-static char* findParentCommit(void)
+char* readHead(void)
 {
 	// if HEAD doesn't exist, this is bad...
 	FILE* fp = fopen(".tit/HEAD", "rb");
@@ -143,8 +143,8 @@ int commit(char* message)
 	free(treeHash);
 
 	// parent and parent hash
-	char* parentHash = findParentCommit();
-	if(parentHash != NULL) // THIS IS NOT AN ERROR, it's the initial commit
+	char* parentHash = readHead();
+	if(parentHash != NULL)
 	{
 		fprintf(fp, "\nparent ");
 		fwrite(parentHash, SHA_DIGEST_LENGTH * 2, 1, fp);

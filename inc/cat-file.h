@@ -29,4 +29,6 @@ int catFile(char* hash, _Bool type, _Bool size, _Bool blob);
 
 char* obtainObjectFileDir(char* hash);
 
+int decompressBlob(char* fileIn);
+
 #endif
