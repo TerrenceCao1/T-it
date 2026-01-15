@@ -80,6 +80,7 @@ static COMMIT_OBJ* parseCommitFromHash(char* commitHash)
 	char email[128];
 	long timestamp;
 	char timezone[8];
+	char message[512];
 
 	char line[1024];
 	fgets(line, sizeof(line), fp);
@@ -92,7 +93,27 @@ static COMMIT_OBJ* parseCommitFromHash(char* commitHash)
 		commit->time = timestamp;
 	}
 
+	while(fgetc(fp) != '\n'); // getting past committer
+	fgetc(fp); // burn \n;
+	
+	// getting message
+	fgets(message, sizeof(message), fp);
+	commit->message = strdup(message);
+	
 	return commit;
+}
+
+static void freeCommitObj(COMMIT_OBJ* object)
+{
+	if(!object) return;
+
+	if(object->hash) free(object->hash);
+	if(object->author) free(object->author);
+	if(object->message) free(object->message);
+	if(object->email) free(object->email);
+	if(object->parent) free(object->parent);
+	free(object);
+	return;
 }
 
 /*
@@ -103,15 +124,38 @@ static COMMIT_OBJ* parseCommitFromHash(char* commitHash)
 * until we get the parent commit 
 */
 
+static void getWDayMonth(struct tm* time, char** wDay, char** month)
+{
+	static char* wdays[] = {
+		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+	};
+
+	static char* months[] = {
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+	};
+
+	*wDay = wdays[time->tm_wday];
+	*month = months[time->tm_mon];
+
+	return;
+}
+
 int logCommits(void)
 {
 	char* headCommit = readHead();
 	COMMIT_OBJ* currentCommit = parseCommitFromHash(headCommit);
+	printf("commit %s\n", currentCommit->hash);
+	printf("Author: %s <%s>\n", currentCommit->author, currentCommit->email);
 
-	free(headCommit);
-	if(currentCommit)
-	{
-		free(currentCommit);
-	}
+	time_t ts = currentCommit->time;
+	struct tm* tm_info = localtime(&ts);
+	char* wDay;
+	char* month;
+
+	getWDayMonth(tm_info, &wDay, &month);
+	printf("Date:   %s %s %i %i:%i:%i %i\n", wDay, month, tm_info->tm_mday, tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec, (1900 + tm_info->tm_year));
+
+	freeCommitObj(currentCommit);
+
 	return 0;
 }

@@ -22,9 +22,12 @@ int main(void)
 
 	addFile("README.md", &entries, &count);
 	commit("yuh");
+	putc('\n', stdout);
 
 	addFile("compile_flags.txt", &entries, &count);
 	commit("compile");
+	putc('\n', stdout);
+	putc('\n', stdout);
 
 	logCommits();
 	freeEntriesArr(&entries, count);
