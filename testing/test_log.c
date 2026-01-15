@@ -8,6 +8,7 @@
 #include "add.h"
 #include "write-tree.h"
 #include "commit.h"
+#include "log.h"
 
 int main(void)
 {
@@ -25,6 +26,7 @@ int main(void)
 	addFile("compile_flags.txt", &entries, &count);
 	commit("compile");
 
+	logCommits();
 	freeEntriesArr(&entries, count);
 
 	return 0;

@@ -10,6 +10,9 @@ cli:
 test: 
 	$(CC) ./src/tit_test.c $(src_files) $(include_dirs) -g $(CFLAGS) -o test 
 
+test_log:
+	$(CC) ./testing/test_log.c $(src_files) ./src/log.c $(include_dirs) -g $(CFLAGS) -o test 
+
 test_index:
 	$(CC) ./testing/test_index.c $(src_files) $(include_dirs) -g $(CFLAGS) -o test 
 
