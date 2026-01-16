@@ -37,7 +37,7 @@ static COMMIT_OBJ* parseCommitFromHash(char* commitHash)
 	// obtain commit file dir...
 	char* directory = obtainObjectFileDir((char*)commitHash);
 	
-	decompressBlob(directory);
+	if(decompressBlob(directory) == -1) return NULL;
 	free(directory);
 
 	FILE* fp = fopen(".tit/temp/out", "rb");
@@ -49,18 +49,19 @@ static COMMIT_OBJ* parseCommitFromHash(char* commitHash)
 
 	// initiating commit
 	COMMIT_OBJ* commit = malloc(sizeof(COMMIT_OBJ));
-	commit->hash = commitHash;
+	commit->hash = strdup(commitHash);
 	commit->author = NULL;
 	commit->message = NULL;
 	commit->parent = NULL;
 
 	// trash chars until we get to parent or author
-	while(fgetc(fp) != '\n'); // getting to tree
-	while(fgetc(fp) != '\n'); // getting to parent/author
+	int c;
+	while((c = fgetc(fp)) != '\n' && c != EOF); // getting to tree
+	while((c = fgetc(fp)) != '\n' && c != EOF); // getting to parent/author
 	
 	// read the word to see which line.
 	char temp[7];
-	fread(temp, sizeof(char), 6, fp);
+	if(fread(temp, sizeof(char), 6, fp) != 6) return NULL;
 	temp[6] = '\0';
 
 	// read the parent hash
@@ -71,11 +72,15 @@ static COMMIT_OBJ* parseCommitFromHash(char* commitHash)
 		fread(commit->parent, sizeof(char), SHA_DIGEST_LENGTH * 2, fp);
 
 		commit->parent[SHA_DIGEST_LENGTH * 2] = '\0';
+		fgetc(fp); // burn \n
+	}
+	else
+	{
+		// get back to the start of the line if we get "author" instead of "parent"
+		fseek(fp, -6, SEEK_CUR);
 	}
 
 	// read the author line:
-	fgetc(fp); // burn \n
-	
 	char author[128];
 	char email[128];
 	long timestamp;
@@ -91,22 +96,27 @@ static COMMIT_OBJ* parseCommitFromHash(char* commitHash)
 		commit->author = strdup(author);
 		commit->email = strdup(email);
 		commit->time = timestamp;
+
+		if(!commit->author || !commit->email)
+		{
+			return NULL;
+		}
 	}
 
-	while(fgetc(fp) != '\n'); // getting past committer
+	while((c = fgetc(fp)) != '\n' && c != EOF); // getting past committer
 	fgetc(fp); // burn \n;
 	
 	// getting message
 	fgets(message, sizeof(message), fp);
 	commit->message = strdup(message);
 	
+	fclose(fp);
 	return commit;
 }
 
 static void freeCommitObj(COMMIT_OBJ* object)
 {
 	if(!object) return;
-
 	if(object->hash) free(object->hash);
 	if(object->author) free(object->author);
 	if(object->message) free(object->message);
@@ -144,18 +154,38 @@ int logCommits(void)
 {
 	char* headCommit = readHead();
 	COMMIT_OBJ* currentCommit = parseCommitFromHash(headCommit);
-	printf("commit %s\n", currentCommit->hash);
-	printf("Author: %s <%s>\n", currentCommit->author, currentCommit->email);
 
-	time_t ts = currentCommit->time;
-	struct tm* tm_info = localtime(&ts);
-	char* wDay;
-	char* month;
+	while(currentCommit)
+	{
+		printf("commit %s\n", currentCommit->hash);
+		printf("Author: %s <%s>\n", currentCommit->author, currentCommit->email);
 
-	getWDayMonth(tm_info, &wDay, &month);
-	printf("Date:   %s %s %i %i:%i:%i %i\n", wDay, month, tm_info->tm_mday, tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec, (1900 + tm_info->tm_year));
+		time_t ts = currentCommit->time;
+		struct tm* tm_info = localtime(&ts);
+		char* wDay;
+		char* month;
 
-	freeCommitObj(currentCommit);
+		getWDayMonth(tm_info, &wDay, &month);
+		printf("Date:   %s %s %i %i:%i:%i %i\n", wDay, month, tm_info->tm_mday, tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec, (1900 + tm_info->tm_year));
+		
+		printf("\n");
+		printf("	%s\n\n", currentCommit->message);
+
+		// go to the next commit in the chain
+		char parentCommit[41];
+
+		if(currentCommit->parent)
+		{
+			strcpy(parentCommit, currentCommit->parent);
+			freeCommitObj(currentCommit);
+			currentCommit = parseCommitFromHash(parentCommit);
+		}
+		else
+		{
+			freeCommitObj(currentCommit);
+			break;
+		}
+	}
 
 	return 0;
 }

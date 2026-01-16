@@ -21,12 +21,15 @@ int main(void)
 	readIndex(&entries, &count);
 
 	addFile("README.md", &entries, &count);
-	commit("yuh");
+	commit("commit 1");
 	putc('\n', stdout);
 
 	addFile("compile_flags.txt", &entries, &count);
-	commit("compile");
+	commit("commit 2");
 	putc('\n', stdout);
+
+	addFile("GNUmakefile", &entries, &count);
+	commit("commit 3");
 	putc('\n', stdout);
 
 	logCommits();
