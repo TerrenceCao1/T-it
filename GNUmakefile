@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -lz -lssl -lcrypto -g -lm
 
 include_dirs = -I./inc
-src_files = ./src/init.c ./src/hash-object.c ./src/cat-file.c ./src/add.c ./src/write-tree.c ./src/commit.c
+src_files = ./src/init.c ./src/hash-object.c ./src/cat-file.c ./src/add.c ./src/write-tree.c ./src/commit.c ./src/log.c
 
 cli:
 	$(CC) $(CFLAGS) ./testing/mainCLI.c $(src_files) $(include_dirs) -o tit

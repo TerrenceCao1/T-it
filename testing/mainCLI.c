@@ -13,6 +13,7 @@
 #include "add.h"
 #include "write-tree.h"
 #include "commit.h"
+#include "log.h"
 
 int main(int argc, char** argv)
 {
@@ -214,6 +215,12 @@ int main(int argc, char** argv)
 			return -1;
 		}
 		commit(argv[3]);
+	}
+
+	// LOG
+	else if(strcmp(argv[1], "log") == 0)
+	{
+		logCommits();
 	}
 
 	else
